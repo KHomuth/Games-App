@@ -1,15 +1,8 @@
-import { Text, View } from "react-native";
+// app/index.tsx
 
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+import React from 'react';
+import Home from './Home';
+
+export default function App() {
+  return <Home />; // Zeigt den Homescreen ohne Login als default Seite
 }
