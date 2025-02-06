@@ -2,21 +2,20 @@
 
 import React, { useState } from 'react';
 import { StyleSheet, SafeAreaView, FlatList, Text, TextInput, Image, View } from 'react-native';
-import Config from 'react-native-config';
 
 // Diese Komponente zeigt die Suchfunktion an, zurzeit besteht die Seite nur aus dem Text "Search Page", das zentriert dargestellt wird.
 export default function Search() {
   const [data, setData] = useState<any>([]);
 
-  const searchAPI = async (text: string) => {
+  const searchAPI = (text: string) => {
     // API Request URL = baseURL+filter+apikey+query
     const baseURL = 'https://api.rawg.io/api/';
-    const apikey = `key=${Config.API_KEY}`;
+    const apikey = `key=${process.env.EXPO_PUBLIC_API_KEY}`;
     let filter = 'games?';
     let query = `&search=\'name: ${text.toLocaleLowerCase()}\'`;
 
     if (text.length >= 2) {
-      setTimeout(async () => {
+      /*setTimeout(async () => {
         try {
           const response = await fetch(
             baseURL + filter + apikey + query,
@@ -28,7 +27,8 @@ export default function Search() {
         } catch (error) {
           console.error(error);
         }
-      }, 500);
+      }, 500);*/
+      console.log(apikey);
     }
   }
 
