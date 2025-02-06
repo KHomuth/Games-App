@@ -11,7 +11,7 @@ export default function Search() {
   const searchAPI = async (text: string) => {
     // API Request URL = baseURL+filter+apikey+query
     const baseURL = 'https://api.rawg.io/api/';
-    const apikey = `key=${Config.API_URL}`;
+    const apikey = `key=${Config.API_KEY}`;
     let filter = 'games?';
     let query = `&search=\'name: ${text.toLocaleLowerCase()}\'`;
 
