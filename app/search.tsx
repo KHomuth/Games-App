@@ -14,8 +14,13 @@ export default function Search() {
     let filter = 'games?';
     let query = `&search=\'name: ${text.toLocaleLowerCase()}\'`;
 
+    //games = 'games?';
+    //developers = 'developers?'
+    //dates = 'games?dates=2019-01-01,2019-12-31';
+    //platform = 'platforms?search=';
+
     if (text.length >= 2) {
-      /*setTimeout(async () => {
+      setTimeout(async () => {
         try {
           const response = await fetch(
             baseURL + filter + apikey + query,
@@ -27,10 +32,13 @@ export default function Search() {
         } catch (error) {
           console.error(error);
         }
-      }, 500);*/
-      console.log(apikey);
+      }, 500);
     }
-  }
+  };
+
+  const filterButtons = () => {
+    return
+  };
 
   return (
     <View style={{ flex: 1 }}>
