@@ -1,95 +1,58 @@
 import React from 'react';
 import { Text, View, TouchableOpacity } from 'react-native';
-import { useFonts } from 'expo-font';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
+import styles from './Style';  // Alle Styles importieren
+import { useNavigation } from '@react-navigation/native'; // Importiere useNavigation
 
 export default function Home() {
-  // Lade die Orbitron-Schriftart
   const [fontsLoaded] = useFonts({
-    Orbitron: require('../assets/fonts/Orbitron-Regular.ttf'),  // Pfad zur Schriftart
+    Orbitron: require('../assets/fonts/Orbitron-Regular.ttf'),  // Schriftart laden
   });
 
-  const router = useRouter();
+  const navigation = useNavigation(); // useNavigation Hook für die Navigation
 
   const handleSearchPress = () => {
-    router.push('/search');
+    navigation.navigate('Search'); // Navigiere zu 'Search' Screen
   };
 
   const handleLibraryPress = () => {
-    router.push('/login');
+    navigation.navigate('Library'); // Navigiere zu 'Library' Screen
   };
 
   const handleLoginRegisterPress = () => {
-    router.push('/login');
+    navigation.navigate('Login'); // Navigiere zu 'Login' Screen
   };
 
-  // Warte darauf, dass die Schriftart geladen wird
   if (!fontsLoaded) {
     return null; // Warten, bis die Schriftart geladen ist
   }
 
-  // Button-Style für benutzerdefinierte Buttons
-  const customButtonStyle = {
-    backgroundColor: '#1a237e',  // Dunkelblaue Buttonfarbe
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 20,
-    shadowColor: '#606060', // Dunkelgrauer Schatten (auf dem grauen Hintergrund nicht zu erkennen, daher erstmal placeholder)
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 10,
-    marginBottom: 50,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  };
-
-  // Text-Style für den Button
-  const customTextStyle = {
-    color: 'white',  // Weiße Schriftfarbe
-    fontSize: 33,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  };
-
   return (
-    <View style={{ flex: 1, backgroundColor: '#e0e0e0' }}>
-      {/* Container für den Titel, oben ausgerichtet; 
-          dunkelblaue Farbe für den gesamten Hintergrund */}
-      <View style={{ paddingTop: 50, alignItems: 'center' }}>
-        <Text style={{
-          fontFamily: 'Orbitron, "Times New Roman", sans-serif',
-          fontSize: 42,
-          fontWeight: 'bold',
-          color: '#1a237e',
-          textShadowColor: '#000',
-          textShadowOffset: { width: 1, height: 3 },
-          textShadowRadius: 5,
-        }}>
-          Games DB App!
-        </Text>
+    <View style={styles.mainContainer}>
+      {/* Container für den Titel */}
+      <View style={styles.titleContainer}>
+        <Text style={styles.titleText}>Games DB App!</Text>
       </View>
 
-      {/* Container für die Buttons, zentriert */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 0 }}>
-        {/* Benutzerdefinierter Button für die Games-Suche */}
-        <TouchableOpacity style={customButtonStyle} onPress={handleSearchPress}>
-          <Ionicons name="search" size={33} color="white" />
-          <Text style={customTextStyle}>Search Game</Text>
+      {/* Container für die Buttons */}
+      <View style={styles.buttonContainer}>
+        {/* Button für die Games-Suche */}
+        <TouchableOpacity style={styles.customButtonStyle} onPress={handleSearchPress}>
+          <Ionicons name="search" size={styles.iconStyle.size} color={styles.iconStyle.color} />
+          <Text style={styles.customButtonTextStyle}>Search Game</Text>
         </TouchableOpacity>
 
-        {/* Benutzerdefinierter Button für die Bibliothek */}
-        <TouchableOpacity style={customButtonStyle} onPress={handleLibraryPress}>
-          <Ionicons name="library" size={33} color="white" />
-          <Text style={customTextStyle}>Your Library</Text>
+        {/* Button für die Bibliothek */}
+        <TouchableOpacity style={styles.customButtonStyle} onPress={handleLibraryPress}>
+          <Ionicons name="library" size={styles.iconStyle.size} color={styles.iconStyle.color} />
+          <Text style={styles.customButtonTextStyle}>Your Library</Text>
         </TouchableOpacity>
 
-        {/* Benutzerdefinierter Button für den Login/Registrierungs-Button */}
-        <TouchableOpacity style={customButtonStyle} onPress={handleLoginRegisterPress}>
-          <Ionicons name="log-in" size={33} color="white" />
-          <Text style={customTextStyle}>Login / Register</Text>
+        {/* Button für Login/Registrierung */}
+        <TouchableOpacity style={styles.customButtonStyle} onPress={handleLoginRegisterPress}>
+          <Ionicons name="log-in" size={styles.iconStyle.size} color={styles.iconStyle.color} />
+          <Text style={styles.customButtonTextStyle}>Login / Register</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -1,21 +1,20 @@
-// app/login.tsx
-
 import React, { useState } from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native'; // Use Navigation Hook
+import styles from './Style';  // Alle Styles importieren
 
 export default function Login() {
   // Zustände für die Eingabefelder und den Registrierungsstatus
   const [email, setEmail] = useState(''); // Zustand für die E-Mail-Adresse
   const [password, setPassword] = useState(''); // Zustand für das Passwort
   const [isRegistering, setIsRegistering] = useState(false); // Zustand zum Umschalten zwischen Login und Registrierung
-  const router = useRouter(); // Router-Instanz für die Navigation
+  const navigation = useNavigation(); // useNavigation Hook für die Navigation
 
   // Funktion für den Login-Prozess
   const handleLogin = () => {
     if (email && password) {
       // Bei erfolgreichem Login weiter zur Dashboard-Seite
-      router.push('/Dashboard');
+      navigation.navigate('Dashboard');
     } else {
       // Fehlermeldung bei ungültigen Anmeldedaten
       alert('Please enter valid credentials');
@@ -27,7 +26,7 @@ export default function Login() {
     if (email && password) {
       // Erfolgreiche Registrierung
       alert('Registration successful!');
-      router.push('/Dashboard'); // Weiterleitung nach erfolgreicher Registrierung
+      navigation.navigate('Dashboard'); // Weiterleitung nach erfolgreicher Registrierung
     } else {
       // Fehlermeldung bei ungültigen Anmeldedaten
       alert('Please enter valid credentials');
@@ -35,20 +34,16 @@ export default function Login() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <View style={styles.mainContainer}>
       {/* Anzeige des Textes: Login oder Registrierung je nach Zustand */}
-      <Text>{isRegistering ? 'Register' : 'Login'}</Text>
+
+        <View style={styles.titleContainer}>
+            <Text style={styles.titleText}>{isRegistering ? 'Register' : 'Login'}</Text>
+        </View>
 
       {/* Eingabefeld für die E-Mail-Adresse */}
       <TextInput
-        style={{
-          height: 40,
-          borderColor: 'gray',
-          borderWidth: 1,
-          marginBottom: 10,
-          width: '100%',
-          paddingLeft: 10,
-        }}
+        style={styles.textInput}
         placeholder="Email"
         value={email}
         onChangeText={setEmail} // Setzt den Zustand für die E-Mail
@@ -56,14 +51,7 @@ export default function Login() {
 
       {/* Eingabefeld für das Passwort */}
       <TextInput
-        style={{
-          height: 40,
-          borderColor: 'gray',
-          borderWidth: 1,
-          marginBottom: 20,
-          width: '100%',
-          paddingLeft: 10,
-        }}
+        style={styles.textInput}
         placeholder="Password"
         secureTextEntry // Verhindert die Anzeige des Passworts
         value={password}
