@@ -1,40 +1,59 @@
-// app/Home.tsx
-
 import React from 'react';
-import { Text, View, Button } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Text, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
+import styles from './Style';  // Alle Styles importieren
+import { useNavigation } from '@react-navigation/native'; // Importiere useNavigation
 
 export default function Home() {
-  const router = useRouter();
+  const [fontsLoaded] = useFonts({
+    Orbitron: require('../assets/fonts/Orbitron-Regular.ttf'),  // Schriftart laden
+  });
+
+  const navigation = useNavigation(); // useNavigation Hook für die Navigation
 
   const handleSearchPress = () => {
-    // Weiter zur Suchseite
-    router.push('/search');
+    navigation.navigate('Search'); // Navigiere zu 'Search' Screen
   };
 
   const handleLibraryPress = () => {
-    // Wenn der Benutzer nicht eingeloggt ist, zur Login-Seite weiterleiten
-    router.push('/login');
+    navigation.navigate('Library'); // Navigiere zu 'Library' Screen
   };
 
   const handleLoginRegisterPress = () => {
-    // Direkt zur Login/Registrierungs-Seite weiterleiten
-    router.push('/login');
+    navigation.navigate('Login'); // Navigiere zu 'Login' Screen
   };
 
+  if (!fontsLoaded) {
+    return null; // Warten, bis die Schriftart geladen ist
+  }
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-      <Text style={{ fontSize: 26, marginBottom: 40 }}>Games DB App!</Text>
+    <View style={styles.mainContainer}>
+      {/* Container für den Titel */}
+      <View style={styles.titleContainer}>
+        <Text style={styles.titleText}>Games DB App!</Text>
+      </View>
 
-      {/* Button für die Games-Suche */}
-      <Button title="Search game" onPress={handleSearchPress} />
+      {/* Container für die Buttons */}
+      <View style={styles.buttonContainer}>
+        {/* Button für die Games-Suche */}
+        <TouchableOpacity style={styles.customButtonStyle} onPress={handleSearchPress}>
+          <Ionicons name="search" size={styles.iconStyle.size} color={styles.iconStyle.color} />
+          <Text style={styles.customButtonTextStyle}>Search Game</Text>
+        </TouchableOpacity>
 
-      {/* Button für die Bibliothek (mit Aufforderung zur Anmeldung) */}
-      <Button title="Your library (Login required)" onPress={handleLibraryPress} />
+        {/* Button für die Bibliothek */}
+        <TouchableOpacity style={styles.customButtonStyle} onPress={handleLibraryPress}>
+          <Ionicons name="library" size={styles.iconStyle.size} color={styles.iconStyle.color} />
+          <Text style={styles.customButtonTextStyle}>Your Library</Text>
+        </TouchableOpacity>
 
-      {/* Button für den Login/Registrierung (falls noch kein Konto) */}
-      <View style={{ marginTop: 30 }}>
-        <Button title="Login / Register" onPress={handleLoginRegisterPress} />
+        {/* Button für Login/Registrierung */}
+        <TouchableOpacity style={styles.customButtonStyle} onPress={handleLoginRegisterPress}>
+          <Ionicons name="log-in" size={styles.iconStyle.size} color={styles.iconStyle.color} />
+          <Text style={styles.customButtonTextStyle}>Login / Register</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
