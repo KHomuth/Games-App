@@ -99,9 +99,9 @@ export default function Search() {
 
       {loading ? (
         <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading...</Text>
-      ) : data.length === 0 ? (
-        <Text style={{ textAlign: 'center', marginTop: 20 }}>No results found.</Text>
-      ) : (
+        ) : data.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>No results found.</Text>
+        ) : (
         <SafeAreaView>
           <FlatList
             data={data}
@@ -115,6 +115,7 @@ export default function Search() {
                     {item.released ? item.released.split('-').reverse().join('.') : '-'}
                     {item.tba ? ' - not yet released' : ''}
                   </Text>
+                  <Text>Metacritic: {item.metacritic ? item.metacritic : '-'}</Text>
                   <Text>Platforms: {item.platforms?.map((p) => p.platform.name).join(', ')}</Text>
                   <Text>Genres: {item.genres?.map((g) => g.name).join(', ')}</Text>
                 </View>
