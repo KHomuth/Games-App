@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'; // Importiere useNavig
 export default function Home() {
   const [fontsLoaded] = useFonts({
     Orbitron: require('../assets/fonts/Orbitron-Regular.ttf'),  // Schriftart laden
+    OrbitronExtraBold: require('../assets/fonts/Orbitron-ExtraBold.ttf'),
   });
 
   const navigation = useNavigation(); // useNavigation Hook für die Navigation
