@@ -2,33 +2,38 @@ import React, { useState } from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Use Navigation Hook
 import styles from './Style';  // Alle Styles importieren
+import { registerUser } from './Database';
+
 
 export default function Login() {
-  // Zustände für die Eingabefelder und den Registrierungsstatus
-  const [email, setEmail] = useState(''); // Zustand für die E-Mail-Adresse
-  const [password, setPassword] = useState(''); // Zustand für das Passwort
+  // Zustï¿½nde fï¿½r die Eingabefelder und den Registrierungsstatus
+  const [email, setEmail] = useState(''); // Zustand fï¿½r die E-Mail-Adresse
+  const [password, setPassword] = useState(''); // Zustand fï¿½r das Passwort
   const [isRegistering, setIsRegistering] = useState(false); // Zustand zum Umschalten zwischen Login und Registrierung
-  const navigation = useNavigation(); // useNavigation Hook für die Navigation
+  const navigation = useNavigation(); // useNavigation Hook fï¿½r die Navigation
 
-  // Funktion für den Login-Prozess
+  // Funktion fï¿½r den Login-Prozess
   const handleLogin = () => {
     if (email && password) {
       // Bei erfolgreichem Login weiter zur Dashboard-Seite
       navigation.navigate('Dashboard');
     } else {
-      // Fehlermeldung bei ungültigen Anmeldedaten
+      // Fehlermeldung bei ungï¿½ltigen Anmeldedaten
       alert('Please enter valid credentials');
     }
   };
 
-  // Funktion für den Registrierungsprozess
-  const handleRegister = () => {
+  // Funktion fï¿½r den Registrierungsprozess
+  const handleRegister = async () => {
     if (email && password) {
-      // Erfolgreiche Registrierung
-      alert('Registration successful!');
-      navigation.navigate('Dashboard'); // Weiterleitung nach erfolgreicher Registrierung
+      const success = await registerUser(email, password); // replace 'Alice' with a name input if you want
+      if (success) {
+        alert('Registration successful!');
+        navigation.navigate('Dashboard');
+      } else {
+        alert('Registration failed. Please try again.');
+      }
     } else {
-      // Fehlermeldung bei ungültigen Anmeldedaten
       alert('Please enter valid credentials');
     }
   };
@@ -41,34 +46,34 @@ export default function Login() {
             <Text style={styles.titleText}>{isRegistering ? 'Register' : 'Login'}</Text>
         </View>
 
-      {/* Eingabefeld für die E-Mail-Adresse */}
+      {/* Eingabefeld fï¿½r die E-Mail-Adresse */}
       <TextInput
         style={styles.textInput}
         placeholder="Email"
         value={email}
-        onChangeText={setEmail} // Setzt den Zustand für die E-Mail
+        onChangeText={setEmail} // Setzt den Zustand fï¿½r die E-Mail
       />
 
-      {/* Eingabefeld für das Passwort */}
+      {/* Eingabefeld fï¿½r das Passwort */}
       <TextInput
         style={styles.textInput}
         placeholder="Password"
         secureTextEntry // Verhindert die Anzeige des Passworts
         value={password}
-        onChangeText={setPassword} // Setzt den Zustand für das Passwort
+        onChangeText={setPassword} // Setzt den Zustand fï¿½r das Passwort
       />
 
-      {/* Button für den Login oder die Registrierung */}
+      {/* Button fï¿½r den Login oder die Registrierung */}
       <Button
         title={isRegistering ? 'Register' : 'Log In'} // Text des Buttons basierend auf dem Zustand
         onPress={isRegistering ? handleRegister : handleLogin} // Ruft die entsprechende Funktion auf
       />
 
       <View style={{ marginTop: 10 }}>
-        {/* Button für das Umschalten zwischen Login und Registrierung */}
+        {/* Button fï¿½r das Umschalten zwischen Login und Registrierung */}
         <Button
           title={isRegistering ? 'Already have an account? Log In' : 'Don\'t have an account? Register'}
-          onPress={() => setIsRegistering(!isRegistering)} // Wechselt den Zustand für Registrierung/Login
+          onPress={() => setIsRegistering(!isRegistering)} // Wechselt den Zustand fï¿½r Registrierung/Login
         />
       </View>
     </View>
