@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -5,9 +6,9 @@ import { enableScreens } from 'react-native-screens'; // Importiere enableScreen
 
 // Importiere die Bildschirmkomponenten
 import Home from './Home';
-import Library from './Library';
-import Search from './Search';
-import Login from './Login';
+import Library from './library';
+import Search from './search';
+import Login from './login';
 import Dashboard from './Dashboard'; // Importiere Dashboard
 
 // `enableScreens` vor der Navigation aufrufen
