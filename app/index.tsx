@@ -24,6 +24,7 @@ export default function App() {
         <Stack.Screen name="Library" component={Library} />
         <Stack.Screen name="Search" component={Search} />
         <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="MyAccount" component={MyAccount} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
       </Stack.Navigator>
   );

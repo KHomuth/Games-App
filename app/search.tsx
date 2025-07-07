@@ -1,132 +1,169 @@
-// app/search.tsx
+import React, { useState, useRef } from 'react';
+import { StyleSheet, SafeAreaView, FlatList, Text, TextInput, Image, View, Button } from 'react-native';
 
-import React, { useState } from 'react';
-import { View, Text, FlatList, TextInput, SafeAreaView } from 'react-native';
-import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
-import styles from './Style';
+type PlatformData = {
+  platform: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+};
+
+type Genre = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+type Game = {
+  id: number;
+  name: string;
+  released: string;
+  tba: boolean;
+  background_image: string;
+  metacritic: number;
+  platforms: PlatformData[];
+  genres: Genre[];
+};
+
+type SearchMode = 'platform' | 'genre' | 'gameName';
 
 export default function Search() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Game[]>([]);
+  const [searchMode, setSearchMode] = useState<SearchMode>('gameName');
+  const [searchTerm, setSearchTerm] = useState('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const searchAPI = (text: string) => {
+  const formatToSlug = (text: string) => 
+    text.toLowerCase().trim().replace(/\s+/g, '-');
+
+  const searchAPI = (term: string): void => {
     const baseURL = 'https://api.rawg.io/api/';
     const apikey = `key=${process.env.EXPO_PUBLIC_API_KEY}`;
     let filter = 'games?';
-    let query = `&search=${encodeURIComponent(text.toLowerCase())}`;
+    let query = '';
 
-    if (text.length >= 2) {
-      setTimeout(async () => {
-        try {
-          const response = await fetch(baseURL + filter + apikey + query);
-          const json = await response.json();
-          if (json) {
-            setData(json.results);
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      }, 500);
+    if (searchMode === 'platform') {
+      query = `&platforms=${formatToSlug(term)}`;
+    } else if (searchMode === 'genre') {
+      query = `&genres=${formatToSlug(term)}`;
+    } else {
+      query = `&search=${term.toLowerCase().trim()}`;
     }
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(baseURL + filter + apikey + query);
+        const json = await response.json();
+        if (json && json.results) {
+          setData(json.results);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      setLoading(false);
+    }, 500);
+  };
+
+  const handleSearchChange = (text: string) => {
+    setSearchTerm(text);
+    searchAPI(text);
+  };
+
+  const handleSwitchSearchMode = (mode: SearchMode) => {
+    setSearchMode(mode);
+    setSearchTerm('');
+    setData([]);
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={{ flex: 1 }}>
+      <View style={styles.buttonContainer}>
+        <Button title="Search by Game Name" onPress={() => handleSwitchSearchMode('gameName')} />
+        <Button title="Search by Platform" onPress={() => handleSwitchSearchMode('platform')} />
+        <Button title="Search by Genre" onPress={() => handleSwitchSearchMode('genre')} />
+      </View>
+
       <TextInput
-        style={styles.textInput}
-        placeholder="Search"
-        onChangeText={searchAPI}
-        clearButtonMode="while-editing"
+        style={styles.input}
+        placeholder={`Search by ${searchMode}`}
+        onChangeText={handleSearchChange}
+        value={searchTerm}
       />
 
-      {data.length > 0 && (
+      {loading ? (
+        <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading...</Text>
+        ) : data.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>No results found.</Text>
+        ) : (
         <SafeAreaView>
           <FlatList
             data={data}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => {
-              // Umwandeln der Plattformnamen aus API in ein einfaches Array
-              const platforms = item.platforms?.map((p: any) => p.platform.name) || [];
-
-              return (
-                <View style={styles.gameItem}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.gameTitle}>{item.name}</Text>
-                    <Text style={styles.metaText}>
-                      Release Date: {item.released ? item.released.split('-').reverse().join('.') : '-'}
-                    </Text>
-                    <View style={styles.platformIcons}>
-                      {/* Plattform Icons */}
-                      {platforms.includes('PC') && (
-                        <View style={styles.platformItem}>
-                          <FontAwesome name="windows" size={24} color="#000" />
-                          <Text style={styles.platformText}>PC</Text>
-                        </View>
-                      )}
-
-                      {(platforms.includes('PlayStation 4') || platforms.includes('PlayStation 5')) && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="sony-playstation" size={24} color="#000" />
-                          <Text style={styles.platformText}>PS4/PS5</Text>
-                        </View>
-                      )}
-
-                      {(platforms.includes('Xbox One') || platforms.includes('Xbox Series X/S')) && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="microsoft-xbox" size={24} color="#000" />
-                          <Text style={styles.platformText}>Xbox</Text>
-                        </View>
-                      )}
-
-                      {platforms.includes('Nintendo Switch') && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="nintendo-switch" size={24} color="#000" />
-                          <Text style={styles.platformText}>Switch</Text>
-                        </View>
-                      )}
-
-                      {platforms.includes('Nintendo 3DS') && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="gamepad-variant" size={24} color="#000" />
-                          <Text style={styles.platformText}>3DS</Text>
-                        </View>
-                      )}
-
-                      {platforms.includes('macOS') && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="apple" size={24} color="#000" />
-                          <Text style={styles.platformText}>macOS</Text>
-                        </View>
-                      )}
-
-                      {platforms.includes('iOS') && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="apple" size={24} color="#000" />
-                          <Text style={styles.platformText}>iOS</Text>
-                        </View>
-                      )}
-
-                      {platforms.includes('Android') && (
-                        <View style={styles.platformItem}>
-                          <MaterialCommunityIcons name="android" size={24} color="#000" />
-                          <Text style={styles.platformText}>Android</Text>
-                        </View>
-                      )}
-
-                      {platforms.includes('Linux') && (
-                        <View style={styles.platformItem}>
-                          <FontAwesome name="linux" size={24} color="#000" />
-                          <Text style={styles.platformText}>Linux</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
+            renderItem={({ item }: { item: Game }) => (
+              <View style={styles.card}>
+                <View style={styles.col}>
+                  <Image style={styles.image} source={{ uri: item.background_image }} />
+                  <Text style={styles.headline}>{item.name}</Text>
+                  <Text>
+                    {item.released ? item.released.split('-').reverse().join('.') : '-'}
+                    {item.tba ? ' - not yet released' : ''}
+                  </Text>
+                  <Text>Metacritic: {item.metacritic ? item.metacritic : '-'}</Text>
+                  <Text>Platforms: {item.platforms?.map((p) => p.platform.name).join(', ')}</Text>
+                  <Text>Genres: {item.genres?.map((g) => g.name).join(', ')}</Text>
                 </View>
-              );
-            }}
-            contentContainerStyle={{ paddingBottom: 20 }}
+              </View>
+            )}
           />
         </SafeAreaView>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    flex: 1,
+    paddingVertical: 25,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderRadius: 20,
+    backgroundColor: '#373f43',
+    color: 'white',
+    margin: 15,
+  },
+  col: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    width: '100%',
+    paddingLeft: 10,
+  },
+  headline: {
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginBottom: 15,
+  },
+});
