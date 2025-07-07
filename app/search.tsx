@@ -32,9 +32,8 @@ export default function Search() {
   const [data, setData] = useState<Game[]>([]);
   const [searchMode, setSearchMode] = useState<SearchMode>('gameName');
   const [searchTerm, setSearchTerm] = useState('');
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const timeoutRef = useRef<number | null>(null);
   const formatToSlug = (text: string) => 
     text.toLowerCase().trim().replace(/\s+/g, '-');
 
@@ -56,7 +55,7 @@ export default function Search() {
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(async () => {
+    timeoutRef.current = window.setTimeout(async () => {
       setLoading(true);
       try {
         const response = await fetch(baseURL + filter + apikey + query);

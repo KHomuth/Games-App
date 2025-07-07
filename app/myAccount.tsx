@@ -8,9 +8,9 @@ import styles from './Style';  // Alle Styles importieren
 
 // Diese Komponente zeigt die MyAccount an, zurzeit besteht die Seite nur aus dem Text "My Account", das zentriert dargestellt wird.
 export default function MyAccount() {
-  const navigation = useNavigation(); // useNavigation Hook für die Navigation
+  const navigation = useNavigation<any>(); // useNavigation Hook fï¿½r die Navigation
   const handleBackPress = () => {
-    navigation.navigate('Dashboard'); // Navigiere zurück zum vorherigen Screen
+    navigation.navigate('Dashboard'); // Navigiere zurï¿½ck zum vorherigen Screen
   };
 
   return (
@@ -19,7 +19,7 @@ export default function MyAccount() {
             <Text style={styles.titleText}>My Account</Text>
         </View>
 
-        {/* Button, um zurück zum vorherigen Screen zu navigieren */}
+        {/* Button, um zurï¿½ck zum vorherigen Screen zu navigieren */}
         <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.customButtonStyle} onPress={handleBackPress}>
                 <Ionicons name="arrow-back" size={styles.iconStyle.size} color={styles.iconStyle.color} />

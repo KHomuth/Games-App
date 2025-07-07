@@ -9,6 +9,7 @@ import Home from './Home';
 import Library from './library';
 import Search from './search';
 import Login from './login';
+import MyAccount from './myAccount';
 import Dashboard from './Dashboard'; // Importiere Dashboard
 
 // `enableScreens` vor der Navigation aufrufen

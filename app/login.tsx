@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Text, View, Button, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Use Navigation Hook
 import styles from './Style';  // Alle Styles importieren
-import { registerUser } from './Database';
+import { registerUser } from '../db/Database';
 
 
 export default function Login() {
@@ -10,7 +10,7 @@ export default function Login() {
   const [email, setEmail] = useState(''); // Zustand f�r die E-Mail-Adresse
   const [password, setPassword] = useState(''); // Zustand f�r das Passwort
   const [isRegistering, setIsRegistering] = useState(false); // Zustand zum Umschalten zwischen Login und Registrierung
-  const navigation = useNavigation(); // useNavigation Hook f�r die Navigation
+  const navigation = useNavigation<any>(); // useNavigation Hook f�r die Navigation
 
   // Funktion f�r den Login-Prozess
   const handleLogin = () => {
