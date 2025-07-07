@@ -1,6 +1,8 @@
+// app/library.tsx
+
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import { FontAwesome, MaterialCommunityIcons } from 'react-native-vector-icons';
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import styles from './Style';
 
 const LibraryScreen = () => {
@@ -44,7 +46,7 @@ const LibraryScreen = () => {
             <View style={styles.gameDetails}>
               <Text style={styles.gameTitle}>{item.title}</Text>
               <Text style={styles.metaText}>Release Date: {item.releaseDate}</Text>
-              <Text style={styles.metaText}>Age Rating: {item.ageRating}</Text> {/* Updated label */}
+              <Text style={styles.metaText}>Age Rating: {item.ageRating}</Text>
               <Text style={styles.metaText}>Genre: {item.genre}</Text>
               <Text style={styles.metaText}>Metacritic: {item.metacritic}</Text>
               <Text style={styles.metaText}>Average Playtime: {item.averagePlaytime}</Text>
@@ -57,30 +59,66 @@ const LibraryScreen = () => {
                     <Text style={styles.platformName}>PC</Text>
                   </View>
                 )}
+
                 {(item.platform.includes('PlayStation 4') || item.platform.includes('PlayStation 5')) && (
                   <View style={styles.platformItem}>
                     <MaterialCommunityIcons name="sony-playstation" size={24} color="#000" style={styles.platformIcon} />
                     <Text style={styles.platformName}>PS4/PS5</Text>
                   </View>
                 )}
+
                 {(item.platform.includes('Xbox One') || item.platform.includes('Xbox Series X/S')) && (
                   <View style={styles.platformItem}>
                     <MaterialCommunityIcons name="microsoft-xbox" size={24} color="#000" style={styles.platformIcon} />
                     <Text style={styles.platformName}>Xbox One/Series X/S</Text>
                   </View>
                 )}
+
                 {item.platform.includes('Switch') && (
                   <View style={styles.platformItem}>
                     <MaterialCommunityIcons name="nintendo-switch" size={24} color="#000" style={styles.platformIcon} />
                     <Text style={styles.platformName}>Switch</Text>
                   </View>
                 )}
+
+                {item.platform.includes('Nintendo 3DS') && (
+                  <View style={styles.platformItem}>
+                    <MaterialCommunityIcons name="gamepad-variant" size={24} color="#000" style={styles.platformIcon} />
+                    <Text style={styles.platformName}>3DS</Text>
+                  </View>
+                )}
+
+                {item.platform.includes('macOS') && (
+                  <View style={styles.platformItem}>
+                    <MaterialCommunityIcons name="apple" size={24} color="#000" style={styles.platformIcon} />
+                    <Text style={styles.platformName}>macOS</Text>
+                  </View>
+                )}
+
+                {item.platform.includes('iOS') && (
+                  <View style={styles.platformItem}>
+                    <MaterialCommunityIcons name="apple" size={24} color="#000" style={styles.platformIcon} />
+                    <Text style={styles.platformName}>iOS</Text>
+                  </View>
+                )}
+
+                {item.platform.includes('Android') && (
+                  <View style={styles.platformItem}>
+                    <MaterialCommunityIcons name="android" size={24} color="#000" style={styles.platformIcon} />
+                    <Text style={styles.platformName}>Android</Text>
+                  </View>
+                )}
+
+                {item.platform.includes('Linux') && (
+                  <View style={styles.platformItem}>
+                    <FontAwesome name="linux" size={24} color="#000" style={styles.platformIcon} />
+                    <Text style={styles.platformName}>Linux</Text>
+                  </View>
+                )}
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => removeGame(item.id)}
-            >
+
+            <TouchableOpacity style={styles.removeButton} onPress={() => removeGame(item.id)}>
               <Text style={styles.listButtonTextStyle}>Remove</Text>
             </TouchableOpacity>
           </View>

@@ -25,9 +25,13 @@ export default function Home() {
     navigation.navigate('Login'); // Navigiere zu 'Login' Screen
   };
 
-  if (!fontsLoaded) {
-    return null; // Warten, bis die Schriftart geladen ist
-  }
+ if (!fontsLoaded) {
+  return (
+    <View style={styles.mainContainer}>
+      <Text>Loading...</Text>  {/* Placeholder während das Laden der Schriftart */}
+    </View>
+  );
+}
 
   return (
     <View style={styles.mainContainer}>

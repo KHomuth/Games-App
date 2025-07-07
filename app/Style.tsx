@@ -1,3 +1,5 @@
+//app/Style.tsx
+
 import { StyleSheet } from 'react-native';
 import { Dimensions } from 'react-native';
 
