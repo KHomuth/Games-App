@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'; // Importiere useNavig
 export default function Home() {
   const [fontsLoaded] = useFonts({
     Orbitron: require('../assets/fonts/Orbitron-Regular.ttf'),  // Schriftart laden
+    OrbitronExtraBold: require('../assets/fonts/Orbitron-ExtraBold.ttf'),
   });
 
   const navigation = useNavigation(); // useNavigation Hook für die Navigation
@@ -24,9 +25,13 @@ export default function Home() {
     navigation.navigate('Login'); // Navigiere zu 'Login' Screen
   };
 
-  if (!fontsLoaded) {
-    return null; // Warten, bis die Schriftart geladen ist
-  }
+ if (!fontsLoaded) {
+  return (
+    <View style={styles.mainContainer}>
+      <Text>Loading...</Text>  {/* Placeholder während das Laden der Schriftart */}
+    </View>
+  );
+}
 
   return (
     <View style={styles.mainContainer}>

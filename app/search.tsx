@@ -1,76 +1,129 @@
-// app/search.tsx
+import React, { useState, useRef } from 'react';
+import { StyleSheet, SafeAreaView, FlatList, Text, TextInput, Image, View, Button } from 'react-native';
 
-import React, { useState } from 'react';
-import { StyleSheet, SafeAreaView, FlatList, Text, TextInput, Image, View } from 'react-native';
+type PlatformData = {
+  platform: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+};
 
-// Diese Komponente zeigt die Suchfunktion an, zurzeit besteht die Seite nur aus dem Text "Search Page", das zentriert dargestellt wird.
+type Genre = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+type Game = {
+  id: number;
+  name: string;
+  released: string;
+  tba: boolean;
+  background_image: string;
+  metacritic: number;
+  platforms: PlatformData[];
+  genres: Genre[];
+};
+
+type SearchMode = 'platform' | 'genre' | 'gameName';
+
 export default function Search() {
-  const [data, setData] = useState<any>([]);
+  const [data, setData] = useState<Game[]>([]);
+  const [searchMode, setSearchMode] = useState<SearchMode>('gameName');
+  const [searchTerm, setSearchTerm] = useState('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const searchAPI = (text: string) => {
-    // API Request URL = baseURL+filter+apikey+query
+  const formatToSlug = (text: string) => 
+    text.toLowerCase().trim().replace(/\s+/g, '-');
+
+  const searchAPI = (term: string): void => {
     const baseURL = 'https://api.rawg.io/api/';
     const apikey = `key=${process.env.EXPO_PUBLIC_API_KEY}`;
     let filter = 'games?';
-    let query = `&search=\'name: ${text.toLocaleLowerCase()}\'`;
+    let query = '';
 
-    //games = 'games?';
-    //developers = 'developers?'
-    //dates = 'games?dates=2019-01-01,2019-12-31';
-    //platform = 'platforms?search=';
-
-    if (text.length >= 2) {
-      setTimeout(async () => {
-        try {
-          const response = await fetch(
-            baseURL + filter + apikey + query,
-          );
-          const json = await response.json();
-          if (json) {
-            setData(json.results);
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      }, 500);
+    if (searchMode === 'platform') {
+      query = `&platforms=${formatToSlug(term)}`;
+    } else if (searchMode === 'genre') {
+      query = `&genres=${formatToSlug(term)}`;
+    } else {
+      query = `&search=${term.toLowerCase().trim()}`;
     }
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(baseURL + filter + apikey + query);
+        const json = await response.json();
+        if (json && json.results) {
+          setData(json.results);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      setLoading(false);
+    }, 500);
   };
 
-  const filterButtons = () => {
-    return
+  const handleSearchChange = (text: string) => {
+    setSearchTerm(text);
+    searchAPI(text);
+  };
+
+  const handleSwitchSearchMode = (mode: SearchMode) => {
+    setSearchMode(mode);
+    setSearchTerm('');
+    setData([]);
   };
 
   return (
     <View style={{ flex: 1 }}>
+      <View style={styles.buttonContainer}>
+        <Button title="Search by Game Name" onPress={() => handleSwitchSearchMode('gameName')} />
+        <Button title="Search by Platform" onPress={() => handleSwitchSearchMode('platform')} />
+        <Button title="Search by Genre" onPress={() => handleSwitchSearchMode('genre')} />
+      </View>
+
       <TextInput
         style={styles.input}
-        placeholder='Search'
-        onChangeText={(text) => searchAPI(text)}
+        placeholder={`Search by ${searchMode}`}
+        onChangeText={handleSearchChange}
+        value={searchTerm}
       />
 
-      {
-        data.length?
+      {loading ? (
+        <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading...</Text>
+        ) : data.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>No results found.</Text>
+        ) : (
         <SafeAreaView>
-          <FlatList 
+          <FlatList
             data={data}
-            renderItem={({ item }) => 
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }: { item: Game }) => (
               <View style={styles.card}>
                 <View style={styles.col}>
+                  <Image style={styles.image} source={{ uri: item.background_image }} />
                   <Text style={styles.headline}>{item.name}</Text>
-                   <Text>{item.released?item.released.split('-').reverse().join('.'):'-'}</Text> 
-                  <FlatList
-                    data={item.platforms}
-                    renderItem={({ item })=>
-                      <Text>{item.platform.name}</Text>
-                    }
-                  />
+                  <Text>
+                    {item.released ? item.released.split('-').reverse().join('.') : '-'}
+                    {item.tba ? ' - not yet released' : ''}
+                  </Text>
+                  <Text>Metacritic: {item.metacritic ? item.metacritic : '-'}</Text>
+                  <Text>Platforms: {item.platforms?.map((p) => p.platform.name).join(', ')}</Text>
+                  <Text>Genres: {item.genres?.map((g) => g.name).join(', ')}</Text>
                 </View>
               </View>
-            }
-            keyExtractor={(item) => item.id}
+            )}
           />
-        </SafeAreaView>:null
-      }
+        </SafeAreaView>
+      )}
     </View>
   );
 }
@@ -85,11 +138,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#373f43',
     color: 'white',
-    margin: 15
+    margin: 15,
   },
   col: {
     flexDirection: 'column',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   input: {
     height: 40,
@@ -97,10 +150,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     width: '100%',
-    paddingLeft: 10
+    paddingLeft: 10,
   },
   headline: {
     fontWeight: 'bold',
-    fontSize: 18
-  }
+    fontSize: 18,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginBottom: 15,
+  },
 });
