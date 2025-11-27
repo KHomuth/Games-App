@@ -28,6 +28,82 @@ type Game = {
 
 type SearchMode = 'platform' | 'genre' | 'gameName';
 
+const PLATFORM_NAME_TO_ID: { [key: string]: number } = {
+  // PC
+  pc: 4,
+  computer: 4,
+  steam: 4,
+
+  // PlayStation 4
+  ps4: 18,
+  'ps 4': 18,
+  'playstation 4': 18,
+  'playstation-4': 18,
+
+  // PlayStation 5
+  ps5: 187,
+  'ps 5': 187,
+  'playstation 5': 187,
+  'playstation-5': 187,
+
+  // Xbox One
+  'xbox one': 1,
+  'xbox-one': 1,
+  xone: 1,
+
+  // Xbox Series X/S
+  'xbox series x': 186,
+  'xbox series s': 186,
+  'xbox series': 186,
+  'series x': 186,
+  'series s': 186,
+
+  // Nintendo Switch
+  switch: 7,
+  'nintendo switch': 7,
+  'nintendo-switch': 7,
+};
+
+const GENRE_NAME_TO_SLUG: { [key: string]: string } = {
+  action: 'action',
+  indie: 'indie',
+  adventure: 'adventure',
+
+  // RPG
+  rpg: 'role-playing-games-rpg',
+  'role playing': 'role-playing-games-rpg',
+  'role-playing': 'role-playing-games-rpg',
+
+  // Shooter
+  shooter: 'shooter',
+  shooters: 'shooter',
+  fps: 'shooter',
+
+  // MMO / MMORPG
+  mmo: 'massively-multiplayer',
+  mmorpg: 'massively-multiplayer',
+  'massively multiplayer': 'massively-multiplayer',
+
+  // Weitere Standard-Genres
+  strategy: 'strategy',
+  casual: 'casual',
+  simulation: 'simulation',
+  puzzle: 'puzzle',
+  arcade: 'arcade',
+  platformer: 'platformer',
+  racing: 'racing',
+  sports: 'sports',
+  fighting: 'fighting',
+  family: 'family',
+  'board games': 'board-games',
+  educational: 'educational',
+  card: 'card',
+};
+
+
+
+
+
 export default function Search() {
   const [data, setData] = useState<Game[]>([]);
   const [searchMode, setSearchMode] = useState<SearchMode>('gameName');
@@ -43,12 +119,29 @@ export default function Search() {
     let filter = 'games?';
     let query = '';
 
+    const normalizedTerm = term.toLowerCase().trim();
+
+    if (!normalizedTerm) {
+        setData([]);
+        return;
+    }
     if (searchMode === 'platform') {
-      query = `&platforms=${formatToSlug(term)}`;
+        const platformId = PLATFORM_NAME_TO_ID[normalizedTerm];
+
+        if (!platformId) {
+            console.warn('Unknown platform input:', normalizedTerm);
+            setData([]);
+            return;
+        }
+
+        query = `&platforms=${platformId}`;
     } else if (searchMode === 'genre') {
-      query = `&genres=${formatToSlug(term)}`;
+      const mappedSlug = GENRE_NAME_TO_SLUG[normalizedTerm];
+      const genreSlug = mappedSlug ? mappedSlug : formatToSlug(term);
+
+      query = `&genres=${genreSlug}`;
     } else {
-      query = `&search=${term.toLowerCase().trim()}`;
+      query = `&search=${normalizedTerm}`;
     }
 
     if (timeoutRef.current) {
