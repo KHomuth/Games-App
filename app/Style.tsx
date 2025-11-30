@@ -20,9 +20,8 @@ const styles = StyleSheet.create({
 
   // Style für den Titeltext
   titleText: {
-    fontFamily: 'Orbitron, "Times New Roman", sans-serif',
+    fontFamily: 'OrbitronExtraBold',
     fontSize: 42,
-    fontWeight: 'bold',
     color: '#1a237e',
     textShadowColor: '#000',
     textShadowOffset: { width: 1, height: 3 },
@@ -147,7 +146,7 @@ const styles = StyleSheet.create({
   // Style für Spieltitel
   gameTitle: {
     fontSize: 30,
-    fontFamily: 'Orbitron-ExtraBold',
+    fontFamily: 'OrbitronExtraBold',
     fontWeight: '900',
     color: '#1a237e',
   },
