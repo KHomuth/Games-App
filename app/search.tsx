@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, SafeAreaView, FlatList, Text, TextInput, Image, View, Button } from 'react-native';
+import { StyleSheet, SafeAreaView, FlatList, Text, TextInput, Image, View, Button, Alert } from 'react-native';
+import { favoriteGames } from './../db/Database';
 
 type PlatformData = {
   platform: {
@@ -117,6 +118,29 @@ export default function Search() {
                   <Text>Metacritic: {item.metacritic ? item.metacritic : '-'}</Text>
                   <Text>Platforms: {item.platforms?.map((p) => p.platform.name).join(', ')}</Text>
                   <Text>Genres: {item.genres?.map((g) => g.name).join(', ')}</Text>
+                  <View style={styles.buttonContainer}>
+                        <Button
+                            title="Zu Favoriten hinzufügen"
+                            color="#007AFF" 
+                            onPress={async () => {
+                                // Ruft die importierte Datenbankfunktion auf und übergibt die Spieldaten
+                                const success = await favoriteGames(
+                                    item.name,
+                                    item.released,
+                                    item.background_image,
+                                    item.metacritic,
+                                    item.platforms,
+                                    item.genres
+                                );
+
+                                if (success) {
+                                    Alert.alert('Erfolg', `"${item.name}" wurde zu deinen Favoriten hinzugefügt.`);
+                                } else {
+                                    Alert.alert('Fehler', `Konnte "${item.name}" nicht speichern.`);
+                                }
+                            }}
+                        />
+                    </View>
                 </View>
               </View>
             )}
@@ -138,10 +162,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#373f43',
     color: 'white',
     margin: 15,
+    paddingBottom: 25, 
   },
   col: {
     flexDirection: 'column',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    flexShrink: 1, 
+    flexBasis: '70%',
   },
   input: {
     height: 40,
@@ -158,11 +185,13 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 200,
+    marginBottom: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
-    marginBottom: 15,
+    marginTop: 15, 
+    marginBottom: 0,
   },
 });
