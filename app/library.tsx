@@ -112,21 +112,21 @@ const LibraryScreen = () => {
 
                 {item.platform.includes('PC') && (
                   <View style={styles.platformItem}>
-                    <FontAwesome name="windows" size={24} color="#000" style={styles.platformIcon} />
+                    <FontAwesome name="windows" size={24} color="#000" style={styles.platformIcons} />
                     <Text style={styles.platformName}>PC</Text>
                   </View>
                 )}
 
                 {(item.platform.includes('PlayStation 4') || item.platform.includes('PlayStation 5')) && (
                   <View style={styles.platformItem}>
-                    <MaterialCommunityIcons name="sony-playstation" size={24} color="#000" style={styles.platformIcon} />
+                    <MaterialCommunityIcons name="sony-playstation" size={24} color="#000" style={styles.platformIcons} />
                     <Text style={styles.platformName}>PS4/PS5</Text>
                   </View>
                 )}
 
                 {(item.platform.includes('Xbox One') || item.platform.includes('Xbox Series X/S')) && (
                    <View style={styles.platformItem}>
-                     <MaterialCommunityIcons name="microsoft-xbox" size={24} color="#000" style={styles.platformIcon} />
+                     <MaterialCommunityIcons name="microsoft-xbox" size={24} color="#000" style={styles.platformIcons} />
                      <Text style={styles.platformName}>Xbox One/Series X/S</Text>
                    </View>
                  )}
