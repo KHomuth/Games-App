@@ -24,14 +24,9 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-sqlite",
-      "expo-font",
-      "expo-router",
-      "expo-web-browser"
-    ],
+    "plugins": ["expo-sqlite", "expo-router"],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": false
     }
   }
 }

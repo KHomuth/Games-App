@@ -1,50 +1,59 @@
-# Welcome to your Expo app 👋
+# Games DB (Expo demo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native app built with **Expo SDK 54** and **Expo Router**. It is a **demo only**: there is **no custom backend**. Accounts, sessions, and your game library are stored **on the device** (SQLite + AsyncStorage). Game discovery uses the public **RAWG** HTTP API.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Sign in / Register** — email + password; passwords are **salted SHA-256** hashes in SQLite (appropriate for a demo, not for production threat models).
+- **Search** — debounced requests to RAWG with abort for stale responses; modes: title, platform keyword, genre keyword.
+- **Library** — save games from search results; list and remove locally.
+- **Account** — view email and sign out (clears session token only; data remains on device).
+
+## Setup
+
+1. Install dependencies:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Create a **RAWG** API key at [rawg.io/apidocs](https://rawg.io/apidocs) and add a `.env` file in the project root:
 
    ```bash
-    npx expo start
+   EXPO_PUBLIC_RAWG_API_KEY=your_key_here
    ```
 
-In the output, you'll find options to open the app in a
+   The app also accepts `EXPO_PUBLIC_API_KEY` for backwards compatibility.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+3. Start the dev server:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   ```bash
+   npx expo start
+   ```
 
-## Get a fresh project
+## Project layout
 
-When you're ready, run:
+| Path | Role |
+|------|------|
+| `app/` | Expo Router screens and layouts only |
+| `app/(app)/` | Authenticated routes (library, search, account) |
+| `src/api/rawg/` | RAWG client, maps, errors |
+| `src/db/` | SQLite schema + user / library repositories |
+| `src/auth/` | Password helpers + `AuthContext` session |
+| `src/components/` | Reusable UI |
+| `src/theme/` | Colors and spacing tokens |
 
-```bash
-npm run reset-project
-```
+## Scripts
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- `npm start` — Expo dev server  
+- `npm run lint` — ESLint (Expo flat config)  
+- `npm test` — Jest (add tests under `__tests__/` as needed)  
+- `npx tsc --noEmit` — Typecheck  
 
-## Learn more
+## Typed routes
 
-To learn more about developing your project with Expo, look at the following resources:
+`app.json` sets `experiments.typedRoutes` to `false` so CI/typecheck does not depend on a stale `.expo/types/router.d.ts`. After you run `expo start`, you can turn typed routes back on and commit the regenerated definitions if you want strict `href` typing.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## License
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Private project (`package.json`).
