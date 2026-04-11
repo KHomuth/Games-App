@@ -16,6 +16,7 @@ import {
   type RawgGame,
   type SearchMode,
 } from '@/src/api/rawg';
+import { getAllGenres, getAllPlatforms } from '@/src/api/rawg/metadata';
 import { useAuth } from '@/src/auth/AuthContext';
 import { GameResultCard } from '@/src/components/GameResultCard';
 import { Screen } from '@/src/components/Screen';
@@ -37,7 +38,16 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [filterDescription, setFilterDescription] = useState<string | null>(null);
+  const [filterUnmatched, setFilterUnmatched] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Warm RAWG platform/genre catalogs so the first platform search is not blocked on pagination.
+  useEffect(() => {
+    const ac = new AbortController();
+    void Promise.all([getAllPlatforms(ac.signal), getAllGenres(ac.signal)]).catch(() => {});
+    return () => ac.abort();
+  }, []);
 
   const runSearch = useCallback(async () => {
     abortRef.current?.abort();
@@ -45,6 +55,8 @@ export default function SearchScreen() {
     if (!trimmed) {
       setResults([]);
       setError(null);
+      setFilterDescription(null);
+      setFilterUnmatched(false);
       setLoading(false);
       return;
     }
@@ -56,7 +68,9 @@ export default function SearchScreen() {
 
     try {
       const data = await searchGames({ mode, term: trimmed }, { signal: controller.signal });
-      setResults(data);
+      setResults(data.games);
+      setFilterDescription(data.filterDescription ?? null);
+      setFilterUnmatched(data.filterUnmatched ?? false);
     } catch (e: unknown) {
       if (e instanceof Error && e.name === 'AbortError') {
         return;
@@ -64,12 +78,18 @@ export default function SearchScreen() {
       if (e instanceof RawgConfigError) {
         setError(e.message);
         setResults([]);
+        setFilterDescription(null);
+        setFilterUnmatched(false);
       } else if (e instanceof RawgHttpError) {
         setError('Could not reach RAWG. Check your network or API key.');
         setResults([]);
+        setFilterDescription(null);
+        setFilterUnmatched(false);
       } else {
         setError('Something went wrong while searching.');
         setResults([]);
+        setFilterDescription(null);
+        setFilterUnmatched(false);
       }
     } finally {
       setLoading(false);
@@ -88,6 +108,8 @@ export default function SearchScreen() {
     setTerm('');
     setResults([]);
     setError(null);
+    setFilterDescription(null);
+    setFilterUnmatched(false);
   };
 
   const onSave = async (game: RawgGame) => {
@@ -110,9 +132,9 @@ export default function SearchScreen() {
 
   const emptyHint =
     mode === 'platform'
-      ? 'Try: pc, ps5, switch, xbox one, xbox series…'
+      ? 'Type a platform name (matches RAWG’s catalog: PC, PlayStation 5, Xbox Series S, iOS, …).'
       : mode === 'genre'
-        ? 'Try: action, rpg, shooter, strategy…'
+        ? 'Type a genre (Action, RPG, Shooter, …). Names come from RAWG’s genre list.'
         : 'Type a game title to search.';
 
   return (
@@ -136,6 +158,9 @@ export default function SearchScreen() {
         />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
+        {filterDescription && !error ? (
+          <Text style={styles.filterNote}>{filterDescription}</Text>
+        ) : null}
       </View>
 
       {loading ? (
@@ -148,7 +173,15 @@ export default function SearchScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !loading && debouncedTerm.trim() ? (
-            <Text style={styles.empty}>No results for that query.</Text>
+            <Text style={styles.empty}>
+              {filterUnmatched
+                ? mode === 'platform'
+                  ? `No platform matched “${debouncedTerm.trim()}”. Try another spelling or a name from RAWG (e.g. PC, Nintendo Switch).`
+                  : `No genre matched “${debouncedTerm.trim()}”. Try another spelling (e.g. Action, Indie).`
+                : mode === 'gameName'
+                  ? 'No games found for that title.'
+                  : 'No games matched this filter.'}
+            </Text>
           ) : !loading && !debouncedTerm.trim() ? (
             <Text style={styles.empty}>{emptyHint}</Text>
           ) : null
@@ -221,6 +254,11 @@ const styles = StyleSheet.create({
     color: colors.danger,
     marginBottom: spacing.sm,
     fontSize: 14,
+  },
+  filterNote: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   loader: {
     marginVertical: spacing.sm,

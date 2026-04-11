@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import React, {
   createContext,
@@ -10,9 +9,8 @@ import React, {
 } from 'react';
 
 import { getDatabase } from '@/src/db/database';
+import { clearStoredUserId, getStoredUserId, setStoredUserId } from '@/src/db/session';
 import { getUserById, registerUser, verifyUserCredentials, type UserRow } from '@/src/db/users';
-
-const SESSION_USER_ID_KEY = '@games_app/session_user_id';
 
 export type AuthContextValue = {
   user: UserRow | null;
@@ -41,16 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         await getDatabase();
-        const stored = await AsyncStorage.getItem(SESSION_USER_ID_KEY);
-        if (stored && !cancelled) {
-          const id = Number(stored);
-          if (!Number.isNaN(id)) {
-            const row = await getUserById(id);
-            if (row) {
-              setUser(row);
-            } else {
-              await AsyncStorage.removeItem(SESSION_USER_ID_KEY);
-            }
+        const id = await getStoredUserId();
+        if (id != null && !cancelled) {
+          const row = await getUserById(id);
+          if (row) {
+            setUser(row);
+          } else {
+            await clearStoredUserId();
           }
         }
       } catch (error) {
@@ -74,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!row) {
         return { ok: false as const, message: 'Invalid email or password.' };
       }
-      await AsyncStorage.setItem(SESSION_USER_ID_KEY, String(row.id));
+      await setStoredUserId(row.id);
       setUser(row);
       return { ok: true as const };
     } catch {
@@ -93,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } satisfies Record<typeof result.code, string>;
         return { ok: false as const, message: messages[result.code] };
       }
-      await AsyncStorage.setItem(SESSION_USER_ID_KEY, String(result.user.id));
+      await setStoredUserId(result.user.id);
       setUser(result.user);
       return { ok: true as const };
     } catch {
@@ -102,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await AsyncStorage.removeItem(SESSION_USER_ID_KEY);
+    await clearStoredUserId();
     setUser(null);
   }, []);
 

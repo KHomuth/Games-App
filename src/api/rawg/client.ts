@@ -1,5 +1,11 @@
-import { GENRE_KEY_TO_SLUG, PLATFORM_KEY_TO_ID, slugifyGenreInput } from './maps';
-import { RawgConfigError, RawgHttpError } from './errors';
+import { getRawgApiKey } from './config';
+import {
+  findBestGenreMatch,
+  findBestPlatformMatch,
+  getAllGenres,
+  getAllPlatforms,
+} from './metadata';
+import { RawgHttpError } from './errors';
 import type { RawgGame, RawgGamesListResponse } from './types';
 
 const RAWG_BASE = 'https://api.rawg.io/api';
@@ -12,17 +18,13 @@ export type SearchGamesInput = {
   term: string;
 };
 
-function getApiKey(): string {
-  const key =
-    process.env.EXPO_PUBLIC_RAWG_API_KEY?.trim() ||
-    process.env.EXPO_PUBLIC_API_KEY?.trim();
-  if (!key) {
-    throw new RawgConfigError(
-      'Missing API key. Set EXPO_PUBLIC_RAWG_API_KEY in a .env file (see README).'
-    );
-  }
-  return key;
-}
+export type SearchGamesOutput = {
+  games: RawgGame[];
+  /** Shown when platform/genre mode resolves (e.g. "Platform: PC"). */
+  filterDescription?: string;
+  /** True when the query did not match any platform/genre from RAWG catalogs. */
+  filterUnmatched?: boolean;
+};
 
 function parseGame(raw: unknown): RawgGame | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -49,38 +51,9 @@ function parseList(json: unknown): RawgGame[] {
   return body.results.map(parseGame).filter((g): g is RawgGame => g !== null);
 }
 
-/**
- * Performs a single RAWG games search with optional abort for stale requests.
- */
-export async function searchGames(
-  input: SearchGamesInput,
-  options?: { signal?: AbortSignal }
-): Promise<RawgGame[]> {
-  const key = getApiKey();
-  const url = new URL(`${RAWG_BASE}/games`);
-  url.searchParams.set('key', key);
-
-  const normalized = input.term.toLowerCase().trim();
-
-  if (!normalized) {
-    return [];
-  }
-
-  if (input.mode === 'gameName') {
-    url.searchParams.set('search', normalized);
-  } else if (input.mode === 'platform') {
-    const platformId = PLATFORM_KEY_TO_ID[normalized];
-    if (!platformId) {
-      return [];
-    }
-    url.searchParams.set('platforms', String(platformId));
-  } else {
-    const slug = GENRE_KEY_TO_SLUG[normalized] ?? slugifyGenreInput(input.term);
-    url.searchParams.set('genres', slug);
-  }
-
+async function fetchGamesPage(url: URL, signal?: AbortSignal): Promise<RawgGame[]> {
   const response = await fetch(url.toString(), {
-    signal: options?.signal,
+    signal,
     headers: { Accept: 'application/json' },
   });
 
@@ -91,4 +64,55 @@ export async function searchGames(
 
   const json: unknown = await response.json();
   return parseList(json);
+}
+
+/**
+ * Searches games using RAWG: title search, or platform/genre filters resolved from live /platforms and /genres catalogs.
+ */
+export async function searchGames(
+  input: SearchGamesInput,
+  options?: { signal?: AbortSignal }
+): Promise<SearchGamesOutput> {
+  const key = getRawgApiKey();
+  const url = new URL(`${RAWG_BASE}/games`);
+  url.searchParams.set('key', key);
+
+  const trimmed = input.term.trim();
+  const normalized = trimmed.toLowerCase();
+
+  if (!normalized) {
+    return { games: [] };
+  }
+
+  if (input.mode === 'gameName') {
+    url.searchParams.set('search', normalized);
+    const games = await fetchGamesPage(url, options?.signal);
+    return { games };
+  }
+
+  if (input.mode === 'platform') {
+    const platforms = await getAllPlatforms(options?.signal);
+    const match = findBestPlatformMatch(trimmed, platforms);
+    if (!match) {
+      return { games: [], filterUnmatched: true };
+    }
+    url.searchParams.set('platforms', String(match.id));
+    const games = await fetchGamesPage(url, options?.signal);
+    return {
+      games,
+      filterDescription: `Platform: ${match.name}`,
+    };
+  }
+
+  const genres = await getAllGenres(options?.signal);
+  const match = findBestGenreMatch(trimmed, genres);
+  if (!match) {
+    return { games: [], filterUnmatched: true };
+  }
+  url.searchParams.set('genres', match.slug);
+  const games = await fetchGamesPage(url, options?.signal);
+  return {
+    games,
+    filterDescription: `Genre: ${match.name}`,
+  };
 }

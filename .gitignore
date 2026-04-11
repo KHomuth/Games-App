@@ -29,10 +29,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (keep `.env.example` visible in the repo / file tree)
 .env*.local
 .env
-expo-env.d.ts
 
 # typescript
 *.tsbuildinfo

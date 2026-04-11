@@ -40,6 +40,11 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_library_user ON library_games (user_id);
+
+    CREATE TABLE IF NOT EXISTS app_kv (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
   `);
 
   return connection;
