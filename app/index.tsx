@@ -46,8 +46,8 @@ function MenuLink({ href, icon, label }: { href: Href; icon: IconName; label: st
         accessibilityRole="button"
         style={({ pressed }) => [styles.row, pressed && { opacity: 0.9 }]}
       >
-        <Ionicons name={icon} size={26} color="#fff" />
-        <Text style={styles.rowLabel}>{label}</Text>
+        <Ionicons name={icon} size={26} color="#1a237e" />
+        <Text style={styles.rowLabel} >{label}</Text>
       </Pressable>
     </Link>
   );
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   rowLabel: {
-    color: '#fff',
+    color: colors.primary,
     fontSize: 18,
     fontWeight: '600',
   },

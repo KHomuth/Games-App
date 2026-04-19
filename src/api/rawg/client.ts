@@ -16,10 +16,16 @@ export type SearchGamesInput = {
   mode: SearchMode;
   /** Raw user text (trimmed by caller when needed). */
   term: string;
+  /** Optional full RAWG URL for fetching a specific page (e.g. `next`). */
+  pageUrl?: string;
 };
 
 export type SearchGamesOutput = {
   games: RawgGame[];
+  /** RAWG absolute URL for the next page, if any. */
+  nextPageUrl: string | null;
+  /** Total number of matching games from RAWG, when available. */
+  totalCount: number | null;
   /** Shown when platform/genre mode resolves (e.g. "Platform: PC"). */
   filterDescription?: string;
   /** True when the query did not match any platform/genre from RAWG catalogs. */
@@ -45,13 +51,22 @@ function parseGame(raw: unknown): RawgGame | null {
   };
 }
 
-function parseList(json: unknown): RawgGame[] {
+function parseList(json: unknown): {
+  games: RawgGame[];
+  nextPageUrl: string | null;
+  totalCount: number | null;
+} {
   const body = json as RawgGamesListResponse;
-  if (!body || !Array.isArray(body.results)) return [];
-  return body.results.map(parseGame).filter((g): g is RawgGame => g !== null);
+  const rows = body && Array.isArray(body.results) ? body.results : [];
+  const games = rows.map(parseGame).filter((g): g is RawgGame => g !== null);
+  return {
+    games,
+    nextPageUrl: typeof body?.next === 'string' ? body.next : null,
+    totalCount: typeof body?.count === 'number' ? body.count : null,
+  };
 }
 
-async function fetchGamesPage(url: URL, signal?: AbortSignal): Promise<RawgGame[]> {
+async function fetchGamesPage(url: URL | string, signal?: AbortSignal): Promise<SearchGamesOutput> {
   const response = await fetch(url.toString(), {
     signal,
     headers: { Accept: 'application/json' },
@@ -81,25 +96,40 @@ export async function searchGames(
   const normalized = trimmed.toLowerCase();
 
   if (!normalized) {
-    return { games: [] };
+    return { games: [], nextPageUrl: null, totalCount: null };
+  }
+
+  if (input.pageUrl) {
+    const data = await fetchGamesPage(input.pageUrl, options?.signal);
+    return {
+      games: data.games,
+      nextPageUrl: data.nextPageUrl,
+      totalCount: data.totalCount,
+    };
   }
 
   if (input.mode === 'gameName') {
     url.searchParams.set('search', normalized);
-    const games = await fetchGamesPage(url, options?.signal);
-    return { games };
+    const data = await fetchGamesPage(url, options?.signal);
+    return {
+      games: data.games,
+      nextPageUrl: data.nextPageUrl,
+      totalCount: data.totalCount,
+    };
   }
 
   if (input.mode === 'platform') {
     const platforms = await getAllPlatforms(options?.signal);
     const match = findBestPlatformMatch(trimmed, platforms);
     if (!match) {
-      return { games: [], filterUnmatched: true };
+      return { games: [], nextPageUrl: null, totalCount: null, filterUnmatched: true };
     }
     url.searchParams.set('platforms', String(match.id));
-    const games = await fetchGamesPage(url, options?.signal);
+    const data = await fetchGamesPage(url, options?.signal);
     return {
-      games,
+      games: data.games,
+      nextPageUrl: data.nextPageUrl,
+      totalCount: data.totalCount,
       filterDescription: `Platform: ${match.name}`,
     };
   }
@@ -107,12 +137,14 @@ export async function searchGames(
   const genres = await getAllGenres(options?.signal);
   const match = findBestGenreMatch(trimmed, genres);
   if (!match) {
-    return { games: [], filterUnmatched: true };
+    return { games: [], nextPageUrl: null, totalCount: null, filterUnmatched: true };
   }
   url.searchParams.set('genres', match.slug);
-  const games = await fetchGamesPage(url, options?.signal);
+  const data = await fetchGamesPage(url, options?.signal);
   return {
-    games,
+    games: data.games,
+    nextPageUrl: data.nextPageUrl,
+    totalCount: data.totalCount,
     filterDescription: `Genre: ${match.name}`,
   };
 }

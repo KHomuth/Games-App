@@ -36,10 +36,12 @@ export default function SearchScreen() {
   const debouncedTerm = useDebouncedValue(term, 450);
   const [results, setResults] = useState<RawgGame[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [filterDescription, setFilterDescription] = useState<string | null>(null);
   const [filterUnmatched, setFilterUnmatched] = useState(false);
+  const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Warm RAWG platform/genre catalogs so the first platform search is not blocked on pagination.
@@ -57,6 +59,7 @@ export default function SearchScreen() {
       setError(null);
       setFilterDescription(null);
       setFilterUnmatched(false);
+      setNextPageUrl(null);
       setLoading(false);
       return;
     }
@@ -71,6 +74,7 @@ export default function SearchScreen() {
       setResults(data.games);
       setFilterDescription(data.filterDescription ?? null);
       setFilterUnmatched(data.filterUnmatched ?? false);
+      setNextPageUrl(data.nextPageUrl);
     } catch (e: unknown) {
       if (e instanceof Error && e.name === 'AbortError') {
         return;
@@ -80,16 +84,19 @@ export default function SearchScreen() {
         setResults([]);
         setFilterDescription(null);
         setFilterUnmatched(false);
+        setNextPageUrl(null);
       } else if (e instanceof RawgHttpError) {
         setError('Could not reach RAWG. Check your network or API key.');
         setResults([]);
         setFilterDescription(null);
         setFilterUnmatched(false);
+        setNextPageUrl(null);
       } else {
         setError('Something went wrong while searching.');
         setResults([]);
         setFilterDescription(null);
         setFilterUnmatched(false);
+        setNextPageUrl(null);
       }
     } finally {
       setLoading(false);
@@ -110,6 +117,35 @@ export default function SearchScreen() {
     setError(null);
     setFilterDescription(null);
     setFilterUnmatched(false);
+    setNextPageUrl(null);
+  };
+
+  const onLoadMore = async () => {
+    if (!nextPageUrl || loadingMore || loading) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoadingMore(true);
+    try {
+      const data = await searchGames(
+        { mode, term: debouncedTerm.trim(), pageUrl: nextPageUrl },
+        { signal: controller.signal }
+      );
+      setResults((prev) => [...prev, ...data.games]);
+      setNextPageUrl(data.nextPageUrl);
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        return;
+      }
+      if (e instanceof RawgConfigError) {
+        setError(e.message);
+      } else if (e instanceof RawgHttpError) {
+        setError('Could not load more from RAWG. Check your network or API key.');
+      } else {
+        setError('Something went wrong while loading more results.');
+      }
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   const onSave = async (game: RawgGame) => {
@@ -194,6 +230,22 @@ export default function SearchScreen() {
             addLabel={savingId === item.id ? 'Saving…' : 'Save'}
           />
         )}
+        ListFooterComponent={
+          nextPageUrl && !loading && results.length ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void onLoadMore()}
+              disabled={loadingMore}
+              style={[styles.loadMoreButton, loadingMore && styles.loadMoreButtonDisabled]}
+            >
+              {loadingMore ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.loadMoreLabel}>Load more</Text>
+              )}
+            </Pressable>
+          ) : null
+        }
       />
     </Screen>
   );
@@ -272,5 +324,24 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.lg,
     fontSize: 15,
+  },
+  loadMoreButton: {
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
+    alignSelf: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  loadMoreButtonDisabled: {
+    opacity: 0.7,
+  },
+  loadMoreLabel: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

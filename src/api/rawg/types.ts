@@ -24,5 +24,8 @@ export type RawgGame = {
 };
 
 export type RawgGamesListResponse = {
-  results?: unknown;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: unknown[];
 };

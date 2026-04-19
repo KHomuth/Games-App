@@ -1,4 +1,4 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, useSegments } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/src/auth/AuthContext';
@@ -12,10 +12,11 @@ const screenOptions = {
 };
 
 /**
- * Routes that require a restored on-device session (library, search, account).
+ * Search is public; library/account still require a restored on-device session.
  */
 export default function AuthenticatedGroupLayout() {
   const { user, isReady } = useAuth();
+  const segments = useSegments();
 
   if (!isReady) {
     return (
@@ -25,7 +26,10 @@ export default function AuthenticatedGroupLayout() {
     );
   }
 
-  if (!user) {
+  const routeName = segments[segments.length - 1];
+  const canAccessWithoutLogin = routeName === 'search';
+
+  if (!user && !canAccessWithoutLogin) {
     return <Redirect href="/login" />;
   }
 
