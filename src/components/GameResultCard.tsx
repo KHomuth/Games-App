@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 
 import type { RawgGame } from '@/src/api/rawg/types';
 import { colors } from '@/src/theme/colors';
@@ -23,16 +26,36 @@ function formatReleased(iso: string | null, tba: boolean): string {
  * Search result row: art, core metadata, optional “save to library” action.
  */
 export function GameResultCard({ game, onAdd, addDisabled, addLabel = 'Save' }: Props) {
-  const platforms =
-    game.platforms
+
+  const [showPlatforms, setShowPlatforms] = useState(false);
+
+  const order = ['pc', 'playstation', 'xbox', 'nintendo', 'mobile', 'other'];
+
+  const platformText =
+      game.platforms
       ?.map((p) => p.platform?.name)
       .filter((n): n is string => typeof n === 'string')
+      .sort((a, b) => {
+          const aKey = getPlatformKey(a);
+          const bKey = getPlatformKey(b);
+          return order.indexOf(aKey) - order.indexOf(bKey);
+      })
       .join(', ') || '—';
+
   const genres =
     game.genres
       ?.map((g) => g.name)
       .filter((n): n is string => typeof n === 'string')
       .join(', ') || '—';
+
+  const platformKeys = Array.from(
+    new Set(
+      game.platforms
+        ?.map((p) => p.platform?.name)
+        .filter((n): n is string => typeof n === 'string')
+        .map(getPlatformKey)
+    )
+  );
 
   return (
     <View style={styles.card}>
@@ -50,9 +73,33 @@ export function GameResultCard({ game, onAdd, addDisabled, addLabel = 'Save' }: 
       <Text style={styles.meta}>
         Metacritic: {game.metacritic != null ? String(game.metacritic) : '—'}
       </Text>
-      <Text style={styles.meta} numberOfLines={2}>
-        Platforms: {platforms}
-      </Text>
+      <Pressable
+  accessibilityRole="button"
+  onPress={() => setShowPlatforms((prev) => !prev)}
+>
+  <View style={styles.platformRow}>
+    <Text style={styles.meta}>Platforms:</Text>
+
+    {platformKeys.length ? (
+      <View style={styles.iconRow}>
+        {platformKeys.map((platformKey) => (
+          <Ionicons
+            key={platformKey}
+            name={getPlatformIcon(platformKey)}
+            size={18}
+            color={colors.textSecondary}
+          />
+        ))}
+      </View>
+    ) : (
+      <Text style={styles.meta}>—</Text>
+    )}
+  </View>
+
+  {showPlatforms ? (
+    <Text style={styles.platformText}>{platformText}</Text>
+  ) : null}
+</Pressable>
       <Text style={styles.meta} numberOfLines={2}>
         Genres: {genres}
       </Text>
@@ -128,4 +175,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  platformRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginLeft: 6,
+    flexWrap: 'wrap',
+  },
+  platformText: {
+  fontSize: 13,
+  color: colors.textSecondary,
+  marginBottom: 4,
+},
+
 });

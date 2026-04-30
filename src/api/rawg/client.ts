@@ -81,6 +81,31 @@ async function fetchGamesPage(url: URL | string, signal?: AbortSignal): Promise<
   return parseList(json);
 }
 
+function normalizePlatformSearchTerm(term: string): string {
+  const normalized = term.trim().toLowerCase();
+
+  // PlayStation
+  if (normalized === 'ps5') return 'PlayStation 5';
+  if (normalized === 'ps4') return 'PlayStation 4';
+  if (normalized === 'ps3') return 'PlayStation 3';
+  if (normalized === 'ps2') return 'PlayStation 2';
+  if (normalized === 'ps1') return 'PlayStation';
+
+  // Xbox
+  if (normalized === 'xsx' || normalized === 'xbox series x') return 'Xbox Series S/X';
+  if (normalized === 'xss' || normalized === 'xbox series s') return 'Xbox Series S/X';
+
+  // Nintendo
+  if (normalized === 'switch') return 'Nintendo Switch';
+
+  // Game Boy
+  if (normalized === 'gb') return 'Game Boy';
+  if (normalized === 'gbc' || normalized === 'gameboy color') return 'Game Boy Color';
+  if (normalized === 'gba' || normalized === 'gameboy advance') return 'Game Boy Advance';
+
+  return term;
+}
+
 /**
  * Searches games using RAWG: title search, or platform/genre filters resolved from live /platforms and /genres catalogs.
  */
@@ -120,7 +145,7 @@ export async function searchGames(
 
   if (input.mode === 'platform') {
     const platforms = await getAllPlatforms(options?.signal);
-    const match = findBestPlatformMatch(trimmed, platforms);
+    const match = findBestPlatformMatch(normalizePlatformSearchTerm(trimmed), platforms);
     if (!match) {
       return { games: [], nextPageUrl: null, totalCount: null, filterUnmatched: true };
     }

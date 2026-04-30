@@ -157,9 +157,9 @@ export default function SearchScreen() {
     try {
       const outcome = await addGameToLibrary(user.id, game);
       if (outcome.ok) {
-        Alert.alert('Saved', `${game.name} is in your library.`);
+        Alert.alert('Added to library', `${game.name} was added to your library.`);
       } else if (outcome.code === 'ALREADY_SAVED') {
-        Alert.alert('Already saved', 'This game is already in your library.');
+        Alert.alert('Already in library', 'This game is already in your library.');
       }
     } finally {
       setSavingId(null);
@@ -227,7 +227,7 @@ export default function SearchScreen() {
             game={item}
             onAdd={() => void onSave(item)}
             addDisabled={savingId === item.id}
-            addLabel={savingId === item.id ? 'Saving…' : 'Save'}
+            addLabel={savingId === item.id ? 'Adding…' : 'Add to library'}
           />
         )}
         ListFooterComponent={

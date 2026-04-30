@@ -42,12 +42,9 @@ export default function HomeScreen() {
 function MenuLink({ href, icon, label }: { href: Href; icon: IconName; label: string }) {
   return (
     <Link href={href} asChild>
-      <Pressable
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.row, pressed && { opacity: 0.9 }]}
-      >
-        <Ionicons name={icon} size={26} color="#1a237e" />
-        <Text style={styles.rowLabel} >{label}</Text>
+      <Pressable accessibilityRole="button" style={styles.row}>
+        <Ionicons name={icon} size={30} color="white" />
+        <Text style={styles.rowLabel}>{label}</Text>
       </Pressable>
     </Link>
   );
@@ -56,30 +53,41 @@ function MenuLink({ href, icon, label }: { href: Href; icon: IconName; label: st
 const styles = StyleSheet.create({
   header: {
     paddingTop: spacing.lg,
-    marginBottom: spacing.xl,
+    marginTop: 50,
+    marginBottom: 72,
+    paddingHorizontal: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '800',
+    fontFamily: 'OrbitronExtraBold',
+    fontSize: 45,
+    //fontWeight: '800',
     color: colors.primary,
     marginBottom: spacing.sm,
+    textAlign: 'center',
+    letterSpacing: 5.5,
+    marginBottom : 30,
   },
   subtitle: {
+    //fontFamily: 'OrbitronExtraBold',
     fontSize: 15,
     lineHeight: 22,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   actions: {
-    gap: spacing.md,
+    gap: 35,
+    alignItems: 'center',
   },
   row: {
+    width: '75%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    justifyContent: 'center',
+    gap: 14,
     backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 22,
     shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
@@ -87,8 +95,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   rowLabel: {
-    color: colors.primary,
-    fontSize: 18,
-    fontWeight: '600',
+    color: 'white',
+    fontSize: 26,
+    fontWeight: '800',
   },
 });

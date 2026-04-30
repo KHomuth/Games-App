@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider } from '@/src/auth/AuthContext';
 import { colors } from '@/src/theme/colors';
+import { useFonts } from 'expo-font';
 
 // Keep the splash visible until auth finishes restoring the on-device session.
 SplashScreen.preventAutoHideAsync();
@@ -17,6 +18,15 @@ const headerOptions = {
 };
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    OrbitronExtraBold: require('../assets/fonts/Orbitron-ExtraBold.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+  SplashScreen.hideAsync();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import {
@@ -17,6 +18,7 @@ import {
   type LibraryGameRow,
 } from '@/src/db/libraryGames';
 import { colors } from '@/src/theme/colors';
+import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 import { spacing } from '@/src/theme/spacing';
 
 /**
@@ -25,6 +27,7 @@ import { spacing } from '@/src/theme/spacing';
 export default function LibraryScreen() {
   const { user } = useAuth();
   const [items, setItems] = useState<LibraryGameRow[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -52,7 +55,7 @@ export default function LibraryScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            Nothing saved yet. Use Search and tap “Save” on a game you like.
+            Nothing added to the library yet. Use Search and tap “add to library” on a game you like.
           </Text>
         }
         renderItem={({ item }) => (
@@ -65,20 +68,56 @@ export default function LibraryScreen() {
                   <Text style={styles.thumbText}>—</Text>
                 </View>
               )}
+
               <View style={styles.cardBody}>
                 <Text style={styles.title}>{item.name}</Text>
                 <Text style={styles.meta}>Released: {item.released ?? '—'}</Text>
                 <Text style={styles.meta}>
                   Metacritic: {item.metacritic != null ? String(item.metacritic) : '—'}
                 </Text>
-                <Text style={styles.meta} numberOfLines={2}>
-                  Platforms: {item.platforms.length ? item.platforms.join(', ') : '—'}
-                </Text>
+
+                <View style={styles.platformBlock}>
+                  <Pressable
+                    onPress={() =>
+                      setExpandedId(expandedId === item.rawgId ? null : item.rawgId)
+                    }
+                    style={({ pressed }) => pressed && { opacity: 0.6 }}
+                  >
+                    <View style={styles.platformRow}>
+                      <Text style={styles.meta}>Platforms:</Text>
+
+                      {item.platforms.length ? (
+                        <View style={styles.iconRow}>
+                          {Array.from(
+                            new Set(item.platforms.map((p) => getPlatformKey(p)))
+                          ).map((platformKey) => (
+                            <Ionicons
+                              key={platformKey}
+                              name={getPlatformIcon(platformKey)}
+                              size={18}
+                              color={colors.textSecondary}
+                            />
+                          ))}
+                        </View>
+                      ) : (
+                        <Text style={styles.meta}>—</Text>
+                      )}
+                    </View>
+                  </Pressable>
+
+                  {expandedId === item.rawgId && (
+                    <Text style={styles.platformText}>
+                      {item.platforms.length ? item.platforms.join(', ') : '—'}
+                    </Text>
+                  )}
+                </View>
+
                 <Text style={styles.meta} numberOfLines={2}>
                   Genres: {item.genres.length ? item.genres.join(', ') : '—'}
                 </Text>
               </View>
             </View>
+
             <Pressable
               accessibilityRole="button"
               onPress={() => void onRemove(item.rawgId)}
@@ -162,4 +201,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  platformBlock: {
+    marginBottom: 2,
+  },
+  platformRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 2,
+  },
+  iconRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    marginLeft: 6,
+    flexWrap: 'wrap',
+  },
+  platformText: {
+  fontSize: 13,
+  color: colors.textSecondary,
+  marginBottom: 2,
+  lineHeight: 18,
+  },
+
 });
