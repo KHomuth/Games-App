@@ -1,81 +1,106 @@
-import React, { useState } from 'react';
-import { Text, View, Button, TextInput } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Use Navigation Hook
-import styles from './Style';  // Alle Styles importieren
-import { registerUser } from '../db/Database';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 
+import { useAuth } from '@/src/auth/AuthContext';
+import { PrimaryButton } from '@/src/components/PrimaryButton';
+import { Screen } from '@/src/components/Screen';
+import { TextField } from '@/src/components/TextField';
+import { colors } from '@/src/theme/colors';
+import { spacing } from '@/src/theme/spacing';
 
-export default function Login() {
-  // Zust�nde f�r die Eingabefelder und den Registrierungsstatus
-  const [email, setEmail] = useState(''); // Zustand f�r die E-Mail-Adresse
-  const [password, setPassword] = useState(''); // Zustand f�r das Passwort
-  const [isRegistering, setIsRegistering] = useState(false); // Zustand zum Umschalten zwischen Login und Registrierung
-  const navigation = useNavigation<any>(); // useNavigation Hook f�r die Navigation
+/**
+ * Email + password form backed by SQLite (sign in or create account).
+ */
+export default function LoginScreen() {
+  const { user, signIn, signUp } = useAuth();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  // Funktion f�r den Login-Prozess
-  const handleLogin = () => {
-    if (email && password) {
-      // Bei erfolgreichem Login weiter zur Dashboard-Seite
-      navigation.navigate('Dashboard');
-    } else {
-      // Fehlermeldung bei ung�ltigen Anmeldedaten
-      alert('Please enter valid credentials');
+  useEffect(() => {
+    if (user) {
+      router.replace('/library');
+    }
+  }, [user]);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const result = mode === 'signin' ? await signIn(email, password) : await signUp(email, password);
+      if (result.ok) {
+        router.replace('/library');
+      } else {
+        Alert.alert('Could not continue', result.message);
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
-  // Funktion f�r den Registrierungsprozess
-  const handleRegister = async () => {
-    if (email && password) {
-      const success = await registerUser(email, password); // replace 'Alice' with a name input if you want
-      if (success) {
-        alert('Registration successful!');
-        navigation.navigate('Dashboard');
-      } else {
-        alert('Registration failed. Please try again.');
-      }
-    } else {
-      alert('Please enter valid credentials');
-    }
+  const toggleMode = () => {
+    setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
   };
 
   return (
-    <View style={styles.mainContainer}>
-      {/* Anzeige des Textes: Login oder Registrierung je nach Zustand */}
+    <Screen>
+      <Text style={styles.heading}>{mode === 'signin' ? 'Sign in' : 'Create account'}</Text>
+      <Text style={styles.hint}>
+        Passwords are hashed on-device (SHA-256 + salt). Nothing is sent to a custom backend.
+      </Text>
 
-        <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>{isRegistering ? 'Register' : 'Login'}</Text>
-        </View>
-
-      {/* Eingabefeld f�r die E-Mail-Adresse */}
-      <TextInput
-        style={styles.textInput}
+      <TextField
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
         placeholder="Email"
         value={email}
-        onChangeText={setEmail} // Setzt den Zustand f�r die E-Mail
+        onChangeText={setEmail}
       />
-
-      {/* Eingabefeld f�r das Passwort */}
-      <TextInput
-        style={styles.textInput}
+      <TextField
+        last
         placeholder="Password"
-        secureTextEntry // Verhindert die Anzeige des Passworts
+        secureTextEntry
         value={password}
-        onChangeText={setPassword} // Setzt den Zustand f�r das Passwort
+        onChangeText={setPassword}
       />
 
-      {/* Button f�r den Login oder die Registrierung */}
-      <Button
-        title={isRegistering ? 'Register' : 'Log In'} // Text des Buttons basierend auf dem Zustand
-        onPress={isRegistering ? handleRegister : handleLogin} // Ruft die entsprechende Funktion auf
+      <PrimaryButton
+        label={mode === 'signin' ? 'Sign in' : 'Register'}
+        onPress={() => void submit()}
+        loading={busy}
       />
 
-      <View style={{ marginTop: 10 }}>
-        {/* Button f�r das Umschalten zwischen Login und Registrierung */}
-        <Button
-          title={isRegistering ? 'Already have an account? Log In' : 'Don\'t have an account? Register'}
-          onPress={() => setIsRegistering(!isRegistering)} // Wechselt den Zustand f�r Registrierung/Login
+      <View style={styles.switchBlock}>
+        <PrimaryButton
+          variant="secondary"
+          label={
+            mode === 'signin' ? 'Need an account? Register' : 'Already registered? Sign in'
+          }
+          onPress={toggleMode}
+          disabled={busy}
         />
       </View>
-    </View>
+    </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  heading: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+    marginTop: spacing.md,
+  },
+  hint: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
+    lineHeight: 20,
+  },
+  switchBlock: {
+    marginTop: spacing.md,
+  },
+});
