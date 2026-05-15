@@ -21,6 +21,13 @@ import { colors } from '@/src/theme/colors';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 import { spacing } from '@/src/theme/spacing';
 
+function formatReleased(iso: string | null, tba: boolean): string {
+  if (tba) return 'TBA';
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return iso;
+  return `${d}.${m}.${y}`;
+}
 /**
  * Per-user saved games from SQLite (populated from search).
  */
@@ -71,7 +78,7 @@ export default function LibraryScreen() {
 
               <View style={styles.cardBody}>
                 <Text style={styles.title}>{item.name}</Text>
-                <Text style={styles.meta}>Released: {item.released ?? '—'}</Text>
+                <Text style={styles.meta}>Released: {formatReleased(item.released, false)}</Text>
                 <Text style={styles.meta}>
                   Metacritic: {item.metacritic != null ? String(item.metacritic) : '—'}
                 </Text>

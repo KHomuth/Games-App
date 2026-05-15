@@ -66,13 +66,12 @@ export default function LoginScreen() {
         onChangeText={setPassword}
       />
 
-      <PrimaryButton
-        label={mode === 'signin' ? 'Sign in' : 'Register'}
-        onPress={() => void submit()}
-        loading={busy}
-      />
-
       <View style={styles.switchBlock}>
+        <PrimaryButton
+          label={mode === 'signin' ? 'Sign in' : 'Register'}
+          onPress={() => void submit()}
+          loading={busy}
+        />
         <PrimaryButton
           variant="secondary"
           label={
