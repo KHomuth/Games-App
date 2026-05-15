@@ -58,6 +58,18 @@ export async function listLibraryGames(userId: number): Promise<LibraryGameRow[]
   }));
 }
 
+/**
+ * RAWG ids saved for this user (for search result membership checks).
+ */
+export async function listLibraryRawgIds(userId: number): Promise<Set<number>> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ rawg_id: number }>(
+    'SELECT rawg_id FROM library_games WHERE user_id = ?;',
+    [userId]
+  );
+  return new Set(rows.map((row) => row.rawg_id));
+}
+
 export type AddGameResult = { ok: true } | { ok: false; code: 'ALREADY_SAVED' };
 
 /**

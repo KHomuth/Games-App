@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -21,7 +22,11 @@ import { useAuth } from '@/src/auth/AuthContext';
 import { GameResultCard } from '@/src/components/GameResultCard';
 import { Screen } from '@/src/components/Screen';
 import { TextField } from '@/src/components/TextField';
-import { addGameToLibrary } from '@/src/db/libraryGames';
+import {
+  addGameToLibrary,
+  listLibraryRawgIds,
+  removeGameFromLibrary,
+} from '@/src/db/libraryGames';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import { colors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
@@ -38,11 +43,32 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [libraryIds, setLibraryIds] = useState<Set<number>>(() => new Set());
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [removingId, setRemovingId] = useState<number | null>(null);
   const [filterDescription, setFilterDescription] = useState<string | null>(null);
   const [filterUnmatched, setFilterUnmatched] = useState(false);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const refreshLibraryIds = useCallback(async () => {
+    if (!user) {
+      setLibraryIds(new Set());
+      return;
+    }
+    const ids = await listLibraryRawgIds(user.id);
+    setLibraryIds(ids);
+  }, [user]);
+
+  useEffect(() => {
+    void refreshLibraryIds();
+  }, [refreshLibraryIds]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshLibraryIds();
+    }, [refreshLibraryIds])
+  );
 
   // Warm RAWG platform/genre catalogs so the first platform search is not blocked on pagination.
   useEffect(() => {
@@ -157,12 +183,29 @@ export default function SearchScreen() {
     try {
       const outcome = await addGameToLibrary(user.id, game);
       if (outcome.ok) {
+        setLibraryIds((prev) => new Set(prev).add(game.id));
         Alert.alert('Added to library', `${game.name} was added to your library.`);
       } else if (outcome.code === 'ALREADY_SAVED') {
+        setLibraryIds((prev) => new Set(prev).add(game.id));
         Alert.alert('Already in library', 'This game is already in your library.');
       }
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const onRemove = async (rawgId: number) => {
+    if (!user) return;
+    setRemovingId(rawgId);
+    try {
+      await removeGameFromLibrary(user.id, rawgId);
+      setLibraryIds((prev) => {
+        const next = new Set(prev);
+        next.delete(rawgId);
+        return next;
+      });
+    } finally {
+      setRemovingId(null);
     }
   };
 
@@ -222,14 +265,24 @@ export default function SearchScreen() {
             <Text style={styles.empty}>{emptyHint}</Text>
           ) : null
         }
-        renderItem={({ item }) => (
-          <GameResultCard
-            game={item}
-            onAdd={() => void onSave(item)}
-            addDisabled={savingId === item.id}
-            addLabel={savingId === item.id ? 'Adding…' : 'Add to library'}
-          />
-        )}
+        renderItem={({ item }) => {
+          const inLibrary = user != null && libraryIds.has(item.id);
+          const busy = savingId === item.id || removingId === item.id;
+          let actionLabel: string | undefined;
+          if (savingId === item.id) actionLabel = 'Adding…';
+          else if (removingId === item.id) actionLabel = 'Removing…';
+
+          return (
+            <GameResultCard
+              game={item}
+              inLibrary={inLibrary}
+              onAdd={!inLibrary ? () => void onSave(item) : undefined}
+              onRemove={inLibrary ? () => void onRemove(item.id) : undefined}
+              actionDisabled={busy}
+              actionLabel={actionLabel}
+            />
+          );
+        }}
         ListFooterComponent={
           nextPageUrl && !loading && results.length ? (
             <Pressable

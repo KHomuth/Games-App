@@ -9,9 +9,11 @@ import { spacing } from '@/src/theme/spacing';
 
 type Props = {
   game: RawgGame;
+  inLibrary?: boolean;
   onAdd?: () => void;
-  addDisabled?: boolean;
-  addLabel?: string;
+  onRemove?: () => void;
+  actionDisabled?: boolean;
+  actionLabel?: string;
 };
 
 function formatReleased(iso: string | null, tba: boolean): string {
@@ -25,7 +27,14 @@ function formatReleased(iso: string | null, tba: boolean): string {
 /**
  * Search result row: art, core metadata, optional “save to library” action.
  */
-export function GameResultCard({ game, onAdd, addDisabled, addLabel = 'Save' }: Props) {
+export function GameResultCard({
+  game,
+  inLibrary = false,
+  onAdd,
+  onRemove,
+  actionDisabled,
+  actionLabel,
+}: Props) {
 
   const [showPlatforms, setShowPlatforms] = useState(false);
 
@@ -103,18 +112,34 @@ export function GameResultCard({ game, onAdd, addDisabled, addLabel = 'Save' }: 
       <Text style={styles.meta} numberOfLines={2}>
         Genres: {genres}
       </Text>
-      {onAdd ? (
+      {inLibrary && onRemove ? (
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={`Remove ${game.name} from library`}
+          onPress={onRemove}
+          disabled={actionDisabled}
+          style={({ pressed }) => [
+            styles.removeBtn,
+            pressed && { opacity: 0.85 },
+            actionDisabled && styles.actionDisabled,
+          ]}
+        >
+          <Text style={styles.removeLabel}>{actionLabel ?? 'Remove'}</Text>
+        </Pressable>
+      ) : null}
+      {!inLibrary && onAdd ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Add ${game.name} to library`}
           onPress={onAdd}
-          disabled={addDisabled}
+          disabled={actionDisabled}
           style={({ pressed }) => [
             styles.addBtn,
             pressed && { opacity: 0.85 },
-            addDisabled && styles.addDisabled,
+            actionDisabled && styles.actionDisabled,
           ]}
         >
-          <Text style={styles.addLabel}>{addLabel}</Text>
+          <Text style={styles.addLabel}>{actionLabel ?? 'Add to library'}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -167,10 +192,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: 8,
   },
-  addDisabled: {
+  actionDisabled: {
     opacity: 0.45,
   },
   addLabel: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  removeBtn: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-end',
+    backgroundColor: colors.danger,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+  },
+  removeLabel: {
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
