@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -30,6 +31,15 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ColorMode>('light');
   const [isReady, setIsReady] = useState(false);
+  const persistChain = useRef(Promise.resolve());
+
+  const persistMode = useCallback((next: ColorMode) => {
+    persistChain.current = persistChain.current
+      .then(() => setStoredColorMode(next))
+      .catch((error) => {
+        console.error('Failed to persist color mode', error);
+      });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,22 +64,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const setMode = useCallback((next: ColorMode) => {
-    setModeState(next);
-    void setStoredColorMode(next).catch((error) => {
-      console.error('Failed to persist color mode', error);
-    });
-  }, []);
+  const setMode = useCallback(
+    (next: ColorMode) => {
+      setModeState(next);
+      persistMode(next);
+    },
+    [persistMode]
+  );
 
   const toggleMode = useCallback(() => {
     setModeState((current) => {
       const next: ColorMode = current === 'light' ? 'dark' : 'light';
-      void setStoredColorMode(next).catch((error) => {
-        console.error('Failed to persist color mode', error);
-      });
+      persistMode(next);
       return next;
     });
-  }, []);
+  }, [persistMode]);
 
   const colors = mode === 'dark' ? darkColors : lightColors;
 

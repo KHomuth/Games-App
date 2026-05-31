@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 let connection: SQLite.SQLiteDatabase | null = null;
+let initPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 /**
  * Opens a singleton SQLite database and applies a minimal schema.
@@ -8,14 +9,27 @@ let connection: SQLite.SQLiteDatabase | null = null;
  */
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (connection) {
-    await connection.execAsync('PRAGMA foreign_keys = ON;');
     return connection;
   }
 
-  connection = await SQLite.openDatabaseAsync('games_app.db');
-  await connection.execAsync('PRAGMA foreign_keys = ON;');
+  if (!initPromise) {
+    initPromise = openAndMigrate();
+  }
 
-  await connection.execAsync(`
+  try {
+    return await initPromise;
+  } catch (error) {
+    initPromise = null;
+    connection = null;
+    throw error;
+  }
+}
+
+async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
+  const db = await SQLite.openDatabaseAsync('games_app.db');
+  await db.execAsync('PRAGMA foreign_keys = ON;');
+
+  await db.execAsync(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -47,5 +61,6 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     );
   `);
 
-  return connection;
+  connection = db;
+  return db;
 }
