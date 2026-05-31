@@ -1,4 +1,8 @@
 import type { RawgGame } from '@/src/api/rawg/types';
+import { GAME_LIST_PAGE_SIZE } from '@/src/constants/pagination';
+import { matchesLibraryGame } from '@/src/filters/matchLibraryGame';
+import type { GameFilters } from '@/src/filters/types';
+import { getAllGenres, getAllPlatforms } from '@/src/api/rawg/metadata';
 
 import { getDatabase } from './database';
 
@@ -119,4 +123,70 @@ export async function addGameToLibrary(userId: number, game: RawgGame): Promise<
 export async function removeGameFromLibrary(userId: number, rawgId: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync('DELETE FROM library_games WHERE user_id = ? AND rawg_id = ?;', [userId, rawgId]);
+}
+
+export type LibrarySearchSort = 'name' | 'released' | 'metacritic' | 'added';
+
+export type LibrarySearchResult = {
+  games: LibraryGameRow[];
+  total: number;
+  hasMore: boolean;
+};
+
+function compareLibraryRows(
+  a: LibraryGameRow,
+  b: LibraryGameRow,
+  sortBy: LibrarySearchSort,
+  direction: 'asc' | 'desc'
+): number {
+  let result = 0;
+  if (sortBy === 'name') {
+    result = a.name.localeCompare(b.name);
+  } else if (sortBy === 'released') {
+    result = (a.released ?? '').localeCompare(b.released ?? '');
+  } else if (sortBy === 'metacritic') {
+    result = (a.metacritic ?? -1) - (b.metacritic ?? -1);
+  } else {
+    result = a.addedAt.localeCompare(b.addedAt);
+  }
+  return direction === 'asc' ? result : -result;
+}
+
+/**
+ * Filters the user's library in memory, sorts, then returns one page (for Load more UX).
+ */
+export async function searchLibraryGames(
+  userId: number,
+  filters: GameFilters,
+  options: {
+    offset: number;
+    limit?: number;
+    sortBy?: LibrarySearchSort;
+    sortDirection?: 'asc' | 'desc';
+  }
+): Promise<LibrarySearchResult> {
+  const limit = options.limit ?? GAME_LIST_PAGE_SIZE;
+  const sortBy = options.sortBy ?? 'added';
+  const sortDirection = options.sortDirection ?? 'desc';
+
+  const [rows, platforms, genres] = await Promise.all([
+    listLibraryGames(userId),
+    getAllPlatforms(),
+    getAllGenres(),
+  ]);
+
+  const platformNamesById = new Map(platforms.map((p) => [p.id, p.name]));
+  const genreNamesBySlug = new Map(genres.map((g) => [g.slug, g.name]));
+
+  const filtered = rows.filter((row) =>
+    matchesLibraryGame(row, filters, platformNamesById, genreNamesBySlug)
+  );
+  filtered.sort((a, b) => compareLibraryRows(a, b, sortBy, sortDirection));
+
+  const slice = filtered.slice(options.offset, options.offset + limit);
+  return {
+    games: slice,
+    total: filtered.length,
+    hasMore: options.offset + limit < filtered.length,
+  };
 }

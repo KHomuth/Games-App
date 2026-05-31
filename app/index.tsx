@@ -62,10 +62,9 @@ const styles = StyleSheet.create({
     fontSize: 45,
     //fontWeight: '800',
     color: colors.primary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xl,
     textAlign: 'center',
-    letterSpacing: 5.5,
-    marginBottom : 30,
+    letterSpacing: 5.5
   },
   subtitle: {
     //fontFamily: 'OrbitronExtraBold',

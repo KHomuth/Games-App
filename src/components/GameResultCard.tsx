@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
@@ -27,7 +27,7 @@ function formatReleased(iso: string | null, tba: boolean): string {
 /**
  * Search result row: art, core metadata, optional “save to library” action.
  */
-export function GameResultCard({
+function GameResultCardComponent({
   game,
   inLibrary = false,
   onAdd,
@@ -145,6 +145,8 @@ export function GameResultCard({
     </View>
   );
 }
+
+export const GameResultCard = memo(GameResultCardComponent);
 
 const styles = StyleSheet.create({
   card: {
