@@ -45,6 +45,18 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
       key TEXT PRIMARY KEY NOT NULL,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS rawg_platforms (
+      id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS rawg_genres (
+      id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL
+    );
   `);
 
   return connection;

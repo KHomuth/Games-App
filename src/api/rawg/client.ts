@@ -1,35 +1,23 @@
+import { matchesTitleQuery } from '@/src/filters/matchTitleQuery';
+import type { GameFilters } from '@/src/filters/types';
+import { hasActiveFilters } from '@/src/filters/types';
+
 import { getRawgApiKey } from './config';
-import {
-  findBestGenreMatch,
-  findBestPlatformMatch,
-  getAllGenres,
-  getAllPlatforms,
-} from './metadata';
 import { RawgHttpError } from './errors';
 import type { RawgGame, RawgGamesListResponse } from './types';
 
 const RAWG_BASE = 'https://api.rawg.io/api';
 
-export type SearchMode = 'gameName' | 'platform' | 'genre';
-
 export type SearchGamesInput = {
-  mode: SearchMode;
-  /** Raw user text (trimmed by caller when needed). */
-  term: string;
+  filters: GameFilters;
   /** Optional full RAWG URL for fetching a specific page (e.g. `next`). */
   pageUrl?: string;
 };
 
 export type SearchGamesOutput = {
   games: RawgGame[];
-  /** RAWG absolute URL for the next page, if any. */
   nextPageUrl: string | null;
-  /** Total number of matching games from RAWG, when available. */
   totalCount: number | null;
-  /** Shown when platform/genre mode resolves (e.g. "Platform: PC"). */
-  filterDescription?: string;
-  /** True when the query did not match any platform/genre from RAWG catalogs. */
-  filterUnmatched?: boolean;
 };
 
 function parseGame(raw: unknown): RawgGame | null {
@@ -51,14 +39,16 @@ function parseGame(raw: unknown): RawgGame | null {
   };
 }
 
-function parseList(json: unknown): {
-  games: RawgGame[];
-  nextPageUrl: string | null;
-  totalCount: number | null;
-} {
+function parseList(json: unknown, titleQuery?: string): SearchGamesOutput {
   const body = json as RawgGamesListResponse;
   const rows = body && Array.isArray(body.results) ? body.results : [];
-  const games = rows.map(parseGame).filter((g): g is RawgGame => g !== null);
+  let games = rows.map(parseGame).filter((g): g is RawgGame => g !== null);
+
+  const q = titleQuery?.trim();
+  if (q) {
+    games = games.filter((g) => matchesTitleQuery(g.name, q));
+  }
+
   return {
     games,
     nextPageUrl: typeof body?.next === 'string' ? body.next : null,
@@ -66,9 +56,12 @@ function parseList(json: unknown): {
   };
 }
 
-async function fetchGamesPage(url: URL | string, signal?: AbortSignal): Promise<SearchGamesOutput> {
+async function fetchGamesPage(
+  url: URL | string,
+  options?: { signal?: AbortSignal; titleQuery?: string }
+): Promise<SearchGamesOutput> {
   const response = await fetch(url.toString(), {
-    signal,
+    signal: options?.signal,
     headers: { Accept: 'application/json' },
   });
 
@@ -78,98 +71,45 @@ async function fetchGamesPage(url: URL | string, signal?: AbortSignal): Promise<
   }
 
   const json: unknown = await response.json();
-  return parseList(json);
+  return parseList(json, options?.titleQuery);
 }
 
-function normalizePlatformSearchTerm(term: string): string {
-  const normalized = term.trim().toLowerCase();
-
-  // PlayStation
-  if (normalized === 'ps5') return 'PlayStation 5';
-  if (normalized === 'ps4') return 'PlayStation 4';
-  if (normalized === 'ps3') return 'PlayStation 3';
-  if (normalized === 'ps2') return 'PlayStation 2';
-  if (normalized === 'ps1') return 'PlayStation';
-
-  // Xbox
-  if (normalized === 'xsx' || normalized === 'xbox series x') return 'Xbox Series S/X';
-  if (normalized === 'xss' || normalized === 'xbox series s') return 'Xbox Series S/X';
-
-  // Nintendo
-  if (normalized === 'switch') return 'Nintendo Switch';
-
-  // Game Boy
-  if (normalized === 'gb') return 'Game Boy';
-  if (normalized === 'gbc' || normalized === 'gameboy color') return 'Game Boy Color';
-  if (normalized === 'gba' || normalized === 'gameboy advance') return 'Game Boy Advance';
-
-  return term;
+function applyFiltersToUrl(url: URL, filters: GameFilters): void {
+  const q = filters.query.trim().toLowerCase();
+  if (q) {
+    url.searchParams.set('search', q);
+    // RAWG defaults to fuzzy search ("grand" can match "Gran"); tighten server-side matching.
+    url.searchParams.set('search_precise', 'true');
+  }
+  if (filters.platformIds.length) {
+    url.searchParams.set('platforms', filters.platformIds.join(','));
+  }
+  if (filters.genreSlugs.length) {
+    url.searchParams.set('genres', filters.genreSlugs.join(','));
+  }
 }
 
 /**
- * Searches games using RAWG: title search, or platform/genre filters resolved from live /platforms and /genres catalogs.
+ * Searches games on RAWG using title plus optional platform/genre multiselect filters.
  */
 export async function searchGames(
   input: SearchGamesInput,
   options?: { signal?: AbortSignal }
 ): Promise<SearchGamesOutput> {
-  const key = getRawgApiKey();
-  const url = new URL(`${RAWG_BASE}/games`);
-  url.searchParams.set('key', key);
+  const titleQuery = input.filters.query.trim() || undefined;
 
-  const trimmed = input.term.trim();
-  const normalized = trimmed.toLowerCase();
+  if (input.pageUrl) {
+    return fetchGamesPage(input.pageUrl, { signal: options?.signal, titleQuery });
+  }
 
-  if (!normalized) {
+  if (!hasActiveFilters(input.filters)) {
     return { games: [], nextPageUrl: null, totalCount: null };
   }
 
-  if (input.pageUrl) {
-    const data = await fetchGamesPage(input.pageUrl, options?.signal);
-    return {
-      games: data.games,
-      nextPageUrl: data.nextPageUrl,
-      totalCount: data.totalCount,
-    };
-  }
+  const key = getRawgApiKey();
+  const url = new URL(`${RAWG_BASE}/games`);
+  url.searchParams.set('key', key);
+  applyFiltersToUrl(url, input.filters);
 
-  if (input.mode === 'gameName') {
-    url.searchParams.set('search', normalized);
-    const data = await fetchGamesPage(url, options?.signal);
-    return {
-      games: data.games,
-      nextPageUrl: data.nextPageUrl,
-      totalCount: data.totalCount,
-    };
-  }
-
-  if (input.mode === 'platform') {
-    const platforms = await getAllPlatforms(options?.signal);
-    const match = findBestPlatformMatch(normalizePlatformSearchTerm(trimmed), platforms);
-    if (!match) {
-      return { games: [], nextPageUrl: null, totalCount: null, filterUnmatched: true };
-    }
-    url.searchParams.set('platforms', String(match.id));
-    const data = await fetchGamesPage(url, options?.signal);
-    return {
-      games: data.games,
-      nextPageUrl: data.nextPageUrl,
-      totalCount: data.totalCount,
-      filterDescription: `Platform: ${match.name}`,
-    };
-  }
-
-  const genres = await getAllGenres(options?.signal);
-  const match = findBestGenreMatch(trimmed, genres);
-  if (!match) {
-    return { games: [], nextPageUrl: null, totalCount: null, filterUnmatched: true };
-  }
-  url.searchParams.set('genres', match.slug);
-  const data = await fetchGamesPage(url, options?.signal);
-  return {
-    games: data.games,
-    nextPageUrl: data.nextPageUrl,
-    totalCount: data.totalCount,
-    filterDescription: `Genre: ${match.name}`,
-  };
+  return fetchGamesPage(url, { signal: options?.signal, titleQuery });
 }
