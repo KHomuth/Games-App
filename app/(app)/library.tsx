@@ -28,6 +28,7 @@ function formatReleased(iso: string | null, tba: boolean): string {
   if (!y || !m || !d) return iso;
   return `${d}.${m}.${y}`;
 }
+
 /**
  * Per-user saved games from SQLite (populated from search).
  */
@@ -35,6 +36,8 @@ export default function LibraryScreen() {
   const { user } = useAuth();
   const [items, setItems] = useState<LibraryGameRow[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<'name' | 'released' | 'metacritic'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -54,10 +57,71 @@ export default function LibraryScreen() {
     await refresh();
   };
 
+  const sortedItems = [...items].sort((a, b) => {
+    let result = 0;
+
+    if (sortBy === 'name') {
+      result = a.name.localeCompare(b.name);
+    } else if (sortBy === 'released') {
+      result = (a.released ?? '').localeCompare(b.released ?? '');
+    } else {
+      result = (a.metacritic ?? -1) - (b.metacritic ?? -1);
+    }
+
+    return sortDirection === 'asc' ? result : -result;
+  });
+
+  const changeSort = (nextSortBy: 'name' | 'released' | 'metacritic') => {
+    if (sortBy === nextSortBy) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(nextSortBy);
+      setSortDirection('asc');
+    }
+  };
+
   return (
     <Screen safe={false}>
+      <View style={styles.sortRow}>
+        <Pressable
+          onPress={() => changeSort('name')}
+          style={[
+            styles.sortButton,
+            sortBy === 'name' && styles.sortButtonActive,
+          ]}
+        >
+          <Text style={styles.sortButtonText}>
+            Name {sortBy === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => changeSort('released')}
+          style={[
+            styles.sortButton,
+            sortBy === 'released' && styles.sortButtonActive,
+          ]}
+        >
+          <Text style={styles.sortButtonText}>
+            Release date {sortBy === 'released' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => changeSort('metacritic')}
+          style={[
+            styles.sortButton,
+            sortBy === 'metacritic' && styles.sortButtonActive,
+          ]}
+        >
+          <Text style={styles.sortButtonText}>
+            Rating {sortBy === 'metacritic' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </Text>
+        </Pressable>
+      </View>
+
       <FlatList
-        data={items}
+        data={sortedItems}
         keyExtractor={(item) => String(item.rawgId)}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
@@ -224,10 +288,33 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   platformText: {
-  fontSize: 13,
-  color: colors.textSecondary,
-  marginBottom: 2,
-  lineHeight: 18,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 2,
+    lineHeight: 18,
   },
-
+  sortRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  sortButton: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  sortButtonText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sortButtonActive: {
+    borderColor: colors.primary,
+    borderWidth: 3,
+  },
 });
