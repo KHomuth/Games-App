@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -17,7 +17,8 @@ import {
   removeGameFromLibrary,
   type LibraryGameRow,
 } from '@/src/db/libraryGames';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 import { spacing } from '@/src/theme/spacing';
 
@@ -33,6 +34,8 @@ function formatReleased(iso: string | null, tba: boolean): string {
  */
 export default function LibraryScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [items, setItems] = useState<LibraryGameRow[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -139,95 +142,96 @@ export default function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  listContent: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
-    paddingTop: spacing.sm,
-  },
-  empty: {
-    textAlign: 'center',
-    marginTop: spacing.xl,
-    color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: spacing.md,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  thumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceMuted,
-  },
-  thumbPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thumbText: {
-    color: colors.textSecondary,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 4,
-  },
-  meta: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  remove: {
-    marginTop: spacing.sm,
-    alignSelf: 'flex-end',
-    backgroundColor: colors.danger,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: 8,
-  },
-  removeText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  platformBlock: {
-    marginBottom: 2,
-  },
-  platformRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 2,
-  },
-  iconRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 6,
-    marginLeft: 6,
-    flexWrap: 'wrap',
-  },
-  platformText: {
-  fontSize: 13,
-  color: colors.textSecondary,
-  marginBottom: 2,
-  lineHeight: 18,
-  },
-
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    listContent: {
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.xl,
+      paddingTop: spacing.sm,
+    },
+    empty: {
+      textAlign: 'center',
+      marginTop: spacing.xl,
+      color: colors.textSecondary,
+      fontSize: 15,
+      lineHeight: 22,
+      paddingHorizontal: spacing.md,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      shadowColor: colors.cardShadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    cardRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    thumb: {
+      width: 72,
+      height: 72,
+      borderRadius: 8,
+      backgroundColor: colors.surfaceMuted,
+    },
+    thumbPlaceholder: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    thumbText: {
+      color: colors.textSecondary,
+    },
+    cardBody: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.primary,
+      marginBottom: 4,
+    },
+    meta: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 2,
+    },
+    remove: {
+      marginTop: spacing.sm,
+      alignSelf: 'flex-end',
+      backgroundColor: colors.danger,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: 8,
+    },
+    removeText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    platformBlock: {
+      marginBottom: 2,
+    },
+    platformRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 2,
+    },
+    iconRow: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: 6,
+      marginLeft: 6,
+      flexWrap: 'wrap',
+    },
+    platformText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 2,
+      lineHeight: 18,
+    },
+  });
+}

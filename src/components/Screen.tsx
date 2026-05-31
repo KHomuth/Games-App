@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 type Props = {
@@ -15,6 +17,8 @@ type Props = {
  * Standard page shell with background and horizontal padding.
  */
 export function Screen({ children, safe = true }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const content = <View style={styles.inner}>{children}</View>;
 
   if (safe) {
@@ -28,13 +32,15 @@ export function Screen({ children, safe = true }: Props) {
   return <View style={styles.safe}>{content}</View>;
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  inner: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    inner: {
+      flex: 1,
+      paddingHorizontal: spacing.md,
+    },
+  });
+}

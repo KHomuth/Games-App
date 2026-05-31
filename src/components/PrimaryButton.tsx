@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
 import { spacing } from '@/src/theme/spacing';
 
 type Props = {
@@ -24,6 +25,9 @@ export function PrimaryButton({
   variant = 'primary',
   icon,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(), []);
+
   const bg =
     variant === 'danger'
       ? colors.danger
@@ -57,23 +61,25 @@ export function PrimaryButton({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  disabled: { opacity: 0.5 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+function createStyles() {
+  return StyleSheet.create({
+    base: {
+      paddingVertical: spacing.sm + 2,
+      paddingHorizontal: spacing.lg,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 48,
+    },
+    disabled: { opacity: 0.5 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
+}

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 type Props = TextInputProps & {
@@ -12,6 +14,9 @@ type Props = TextInputProps & {
  * Single-line input styled to match the rest of the UI.
  */
 export function TextField({ style, last, ...rest }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.wrap, !last && styles.margin]}>
       <TextInput
@@ -23,17 +28,19 @@ export function TextField({ style, last, ...rest }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { width: '100%' },
-  margin: { marginBottom: spacing.md },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: { width: '100%' },
+    margin: { marginBottom: spacing.md },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm + 2,
+      fontSize: 16,
+      color: colors.textPrimary,
+      backgroundColor: colors.surface,
+    },
+  });
+}

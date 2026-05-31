@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -28,7 +28,8 @@ import {
   removeGameFromLibrary,
 } from '@/src/db/libraryGames';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 /**
@@ -36,6 +37,8 @@ import { spacing } from '@/src/theme/spacing';
  */
 export default function SearchScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [mode, setMode] = useState<SearchMode>('gameName');
   const [term, setTerm] = useState('');
   const debouncedTerm = useDebouncedValue(term, 450);
@@ -220,9 +223,24 @@ export default function SearchScreen() {
     <Screen safe={false}>
       <View style={styles.pad}>
         <View style={styles.modeRow}>
-          <ModeChip label="Title" active={mode === 'gameName'} onPress={() => changeMode('gameName')} />
-          <ModeChip label="Platform" active={mode === 'platform'} onPress={() => changeMode('platform')} />
-          <ModeChip label="Genre" active={mode === 'genre'} onPress={() => changeMode('genre')} />
+          <ModeChip
+            label="Title"
+            active={mode === 'gameName'}
+            onPress={() => changeMode('gameName')}
+            styles={styles}
+          />
+          <ModeChip
+            label="Platform"
+            active={mode === 'platform'}
+            onPress={() => changeMode('platform')}
+            styles={styles}
+          />
+          <ModeChip
+            label="Genre"
+            active={mode === 'genre'}
+            onPress={() => changeMode('genre')}
+            styles={styles}
+          />
         </View>
 
         <TextField
@@ -304,14 +322,18 @@ export default function SearchScreen() {
   );
 }
 
+type SearchStyles = ReturnType<typeof createStyles>;
+
 function ModeChip({
   label,
   active,
   onPress,
+  styles,
 }: {
   label: string;
   active: boolean;
   onPress: () => void;
+  styles: SearchStyles;
 }) {
   return (
     <Pressable
@@ -324,77 +346,79 @@ function ModeChip({
   );
 }
 
-const styles = StyleSheet.create({
-  pad: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  modeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  chip: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  chipLabelActive: {
-    color: '#fff',
-  },
-  error: {
-    color: colors.danger,
-    marginBottom: spacing.sm,
-    fontSize: 14,
-  },
-  filterNote: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  loader: {
-    marginVertical: spacing.sm,
-  },
-  listContent: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  empty: {
-    textAlign: 'center',
-    color: colors.textSecondary,
-    marginTop: spacing.lg,
-    fontSize: 15,
-  },
-  loadMoreButton: {
-    marginTop: spacing.md,
-    marginBottom: spacing.xl,
-    alignSelf: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    minWidth: 140,
-    alignItems: 'center',
-  },
-  loadMoreButtonDisabled: {
-    opacity: 0.7,
-  },
-  loadMoreLabel: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    pad: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+    },
+    modeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    chip: {
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    chipActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    chipLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textPrimary,
+    },
+    chipLabelActive: {
+      color: '#fff',
+    },
+    error: {
+      color: colors.danger,
+      marginBottom: spacing.sm,
+      fontSize: 14,
+    },
+    filterNote: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: spacing.sm,
+    },
+    loader: {
+      marginVertical: spacing.sm,
+    },
+    listContent: {
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.xl,
+    },
+    empty: {
+      textAlign: 'center',
+      color: colors.textSecondary,
+      marginTop: spacing.lg,
+      fontSize: 15,
+    },
+    loadMoreButton: {
+      marginTop: spacing.md,
+      marginBottom: spacing.xl,
+      alignSelf: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      minWidth: 140,
+      alignItems: 'center',
+    },
+    loadMoreButtonDisabled: {
+      opacity: 0.7,
+    },
+    loadMoreLabel: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 14,
+    },
+  });
+}
