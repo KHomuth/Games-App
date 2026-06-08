@@ -119,27 +119,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
   },
-
   drawerContent: {
     flexGrow: 1,
   },
-
   drawerFooter: {
-    marginTop: '30%',
-    paddingBottom: spacing.md,
-  },
-
+  marginTop: spacing.xl * 2,
+  paddingTop: spacing.md,
+  borderTopWidth: 1,
+  borderTopColor: colors.surfaceMuted,
+},
   homeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
-
   homeButtonText: {
     color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '400',
   },
 });
