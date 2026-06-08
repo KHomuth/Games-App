@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 
 import type { RawgGame } from '@/src/api/rawg/types';
@@ -35,19 +35,18 @@ function GameResultCardComponent({
   actionDisabled,
   actionLabel,
 }: Props) {
-
   const [showPlatforms, setShowPlatforms] = useState(false);
 
   const order = ['pc', 'playstation', 'xbox', 'nintendo', 'mobile', 'other'];
 
   const platformText =
-      game.platforms
+    game.platforms
       ?.map((p) => p.platform?.name)
       .filter((n): n is string => typeof n === 'string')
       .sort((a, b) => {
-          const aKey = getPlatformKey(a);
-          const bKey = getPlatformKey(b);
-          return order.indexOf(aKey) - order.indexOf(bKey);
+        const aKey = getPlatformKey(a);
+        const bKey = getPlatformKey(b);
+        return order.indexOf(aKey) - order.indexOf(bKey);
       })
       .join(', ') || '—';
 
@@ -75,6 +74,7 @@ function GameResultCardComponent({
           <Text style={styles.placeholderText}>No art</Text>
         </View>
       )}
+
       <Text style={styles.title}>{game.name}</Text>
       <Text style={styles.meta}>
         Released: {formatReleased(game.released, game.tba)}
@@ -82,36 +82,50 @@ function GameResultCardComponent({
       <Text style={styles.meta}>
         Metacritic: {game.metacritic != null ? String(game.metacritic) : '—'}
       </Text>
+
       <Pressable
-  accessibilityRole="button"
-  onPress={() => setShowPlatforms((prev) => !prev)}
->
-  <View style={styles.platformRow}>
-    <Text style={styles.meta}>Platforms:</Text>
+        accessibilityRole="button"
+        onPress={() => setShowPlatforms((prev) => !prev)}
+      >
+        <View style={styles.platformRow}>
+          <Text style={styles.meta}>Platforms:</Text>
 
-    {platformKeys.length ? (
-      <View style={styles.iconRow}>
-        {platformKeys.map((platformKey) => (
-          <Ionicons
-            key={platformKey}
-            name={getPlatformIcon(platformKey)}
-            size={18}
-            color={colors.textSecondary}
-          />
-        ))}
-      </View>
-    ) : (
-      <Text style={styles.meta}>—</Text>
-    )}
-  </View>
+          {platformKeys.length ? (
+            <View style={styles.iconRow}>
+              {platformKeys.map((platformKey) => {
+                const icon = getPlatformIcon(platformKey);
 
-  {showPlatforms ? (
-    <Text style={styles.platformText}>{platformText}</Text>
-  ) : null}
-</Pressable>
+                return icon.family === 'ion' ? (
+                  <Ionicons
+                    key={platformKey}
+                    name={icon.name}
+                    size={18}
+                    color={colors.textSecondary}
+                  />
+                ) : (
+                  <MaterialCommunityIcons
+                    key={platformKey}
+                    name={icon.name}
+                    size={18}
+                    color={colors.textSecondary}
+                  />
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.meta}>—</Text>
+          )}
+        </View>
+
+        {showPlatforms ? (
+          <Text style={styles.platformText}>{platformText}</Text>
+        ) : null}
+      </Pressable>
+
       <Text style={styles.meta} numberOfLines={2}>
         Genres: {genres}
       </Text>
+
       {inLibrary && onRemove ? (
         <Pressable
           accessibilityRole="button"
@@ -127,6 +141,7 @@ function GameResultCardComponent({
           <Text style={styles.removeLabel}>{actionLabel ?? 'Remove'}</Text>
         </Pressable>
       ) : null}
+
       {!inLibrary && onAdd ? (
         <Pressable
           accessibilityRole="button"
@@ -221,15 +236,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   iconRow: {
+    flex:1,
     flexDirection: 'row',
     gap: 6,
     marginLeft: 6,
     flexWrap: 'wrap',
   },
   platformText: {
-  fontSize: 13,
-  color: colors.textSecondary,
-  marginBottom: 4,
-},
-
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
 });

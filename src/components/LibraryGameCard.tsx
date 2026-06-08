@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -62,14 +62,25 @@ function LibraryGameCardComponent({ item, onRemove }: Props) {
                 <Text style={styles.meta}>Platforms:</Text>
                 {platformKeys.length ? (
                   <View style={styles.iconRow}>
-                    {platformKeys.map((platformKey) => (
-                      <Ionicons
-                        key={platformKey}
-                        name={getPlatformIcon(platformKey)}
-                        size={18}
-                        color={colors.textSecondary}
-                      />
-                    ))}
+                    {platformKeys.map((platformKey) => {
+                      const icon = getPlatformIcon(platformKey);
+
+                      return icon.family === 'ion' ? (
+                        <Ionicons
+                          key={platformKey}
+                          name={icon.name}
+                          size={18}
+                          color={colors.textSecondary}
+                        />
+                      ) : (
+                        <MaterialCommunityIcons
+                          key={platformKey}
+                          name={icon.name}
+                          size={18}
+                          color={colors.textSecondary}
+                        />
+                      );
+                    })}
                   </View>
                 ) : (
                   <Text style={styles.meta}>—</Text>
