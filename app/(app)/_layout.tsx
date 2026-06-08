@@ -1,8 +1,12 @@
-import { Redirect, Stack, useSegments } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Redirect, router, useSegments } from 'expo-router';
+import { Drawer } from 'expo-router/drawer';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 
 import { useAuth } from '@/src/auth/AuthContext';
 import { colors } from '@/src/theme/colors';
+import { spacing } from '@/src/theme/spacing';
 
 const screenOptions = {
   headerStyle: { backgroundColor: colors.surface },
@@ -10,6 +14,34 @@ const screenOptions = {
   headerTitleStyle: { fontWeight: '600' as const, color: colors.textPrimary },
   contentStyle: { backgroundColor: colors.background },
 };
+
+function CustomDrawerContent(props: any) {
+  return (
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={styles.drawerContent}
+    >
+      <DrawerItemList {...props} />
+
+      <View style={styles.drawerFooter}>
+        <Pressable
+          onPress={() => router.push('/')}
+          style={styles.homeButton}
+        >
+          <Ionicons
+            name="home-outline"
+            size={20}
+            color={colors.textSecondary}
+          />
+
+          <Text style={styles.homeButtonText}>
+            Home
+          </Text>
+        </Pressable>
+      </View>
+    </DrawerContentScrollView>
+  );
+}
 
 /**
  * Search is public; library/account still require a restored on-device session.
@@ -34,11 +66,49 @@ export default function AuthenticatedGroupLayout() {
   }
 
   return (
-    <Stack screenOptions={screenOptions}>
-      <Stack.Screen name="library" options={{ title: 'My library' }} />
-      <Stack.Screen name="search" options={{ title: 'Search' }} />
-      <Stack.Screen name="account" options={{ title: 'Account' }} />
-    </Stack>
+    <Drawer
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        ...screenOptions,
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.textSecondary,
+        drawerActiveBackgroundColor: colors.surfaceMuted,
+
+        drawerItemStyle: {
+          marginVertical: spacing.xs,
+        },
+      }}
+    >
+      <Drawer.Screen
+        name="library"
+        options={{
+          title: 'My library',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="library-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="search-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Drawer>
   );
 }
 
@@ -48,5 +118,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
+  },
+
+  drawerContent: {
+    flexGrow: 1,
+  },
+
+  drawerFooter: {
+    marginTop: '30%',
+    paddingBottom: spacing.md,
+  },
+
+  homeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+  },
+
+  homeButtonText: {
+    color: colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '500',
   },
 });
