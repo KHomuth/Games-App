@@ -13,7 +13,7 @@ import {
 import { GameFiltersPanel } from '@/src/components/GameFiltersPanel';
 import { LibraryGameCard } from '@/src/components/LibraryGameCard';
 import { LoadMoreFooter } from '@/src/components/LoadMoreFooter';
-import { listScreenStyles } from '@/src/components/listScreenStyles';
+import { useListScreenStyles } from '@/src/components/listScreenStyles';
 import { Screen } from '@/src/components/Screen';
 import { GAME_LIST_FLATLIST_PROPS } from '@/src/constants/flatList';
 import { describeFilters } from '@/src/filters/describeFilters';
@@ -27,7 +27,8 @@ import {
 } from '@/src/db/libraryGames';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import { useGameCatalogOptions } from '@/src/hooks/useGameCatalogOptions';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 /**
@@ -35,6 +36,9 @@ import { spacing } from '@/src/theme/spacing';
  */
 export default function LibraryScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const listScreenStyles = useListScreenStyles();
   const [filters, setFilters] = useState<GameFilters>(EMPTY_GAME_FILTERS);
   const debouncedQuery = useDebouncedValue(filters.query, 450);
   const { platformIds, genreSlugs } = filters;
@@ -141,7 +145,7 @@ export default function LibraryScreen() {
             : 'Nothing in your library yet. Use Search and tap “add to library” on a game you like.'}
         </Text>
       ) : null,
-    [loading, debouncedFilters]
+    [loading, debouncedFilters, listScreenStyles.empty]
   );
 
   const listFooter = useMemo(
@@ -229,35 +233,37 @@ export default function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  sortRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  sortButton: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  sortButtonText: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  sortButtonActive: {
-    borderColor: colors.primary,
-    borderWidth: 3,
-  },
-  countNote: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.xs,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    sortRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      marginBottom: spacing.sm,
+    },
+    sortButton: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: 20,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+    },
+    sortButtonText: {
+      color: colors.textPrimary,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    sortButtonActive: {
+      borderColor: colors.primary,
+      borderWidth: 3,
+    },
+    countNote: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.xs,
+    },
+  });
+}
