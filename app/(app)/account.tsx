@@ -5,7 +5,6 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/src/auth/AuthContext';
 import { PrimaryButton } from '@/src/components/PrimaryButton';
 import { Screen } from '@/src/components/Screen';
-import { ThemeToggle } from '@/src/components/ThemeToggle';
 import { useTheme } from '@/src/theme/ThemeContext';
 import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
@@ -40,8 +39,6 @@ export default function AccountScreen() {
       <Text style={styles.note}>
         This is a demo: there is no cloud backend. Data lives in SQLite on this device only.
       </Text>
-
-      <ThemeToggle />
 
       <View style={styles.actions}>
         <PrimaryButton label="Sign out" variant="danger" onPress={confirmSignOut} />

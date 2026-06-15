@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type { RawgGame } from '@/src/api/rawg/types';
 import { useTheme } from '@/src/theme/ThemeContext';
@@ -70,46 +70,69 @@ function GameResultCardComponent({
 
   return (
     <View style={styles.card}>
-      {game.background_image ? (
-        <Image source={{ uri: game.background_image }} style={styles.image} />
-      ) : (
-        <View style={[styles.image, styles.imagePlaceholder]}>
-          <Text style={styles.placeholderText}>No art</Text>
-        </View>
-      )}
-      <Text style={styles.title}>{game.name}</Text>
-      <Text style={styles.meta}>Released: {formatReleased(game.released, game.tba)}</Text>
-      <Text style={styles.meta}>
-        Metacritic: {game.metacritic != null ? String(game.metacritic) : '—'}
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => setShowPlatforms((prev) => !prev)}
-      >
-        <View style={styles.platformRow}>
-          <Text style={styles.meta}>Platforms:</Text>
+      <View style={styles.cardRow}>
+        {game.background_image ? (
+          <Image source={{ uri: game.background_image }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={styles.placeholderText}>No art</Text>
+          </View>
+        )}
 
-          {platformKeys.length ? (
-            <View style={styles.iconRow}>
-              {platformKeys.map((platformKey) => (
-                <Ionicons
-                  key={platformKey}
-                  name={getPlatformIcon(platformKey)}
-                  size={18}
-                  color={colors.textSecondary}
-                />
-              ))}
+        <View style={styles.cardBody}>
+          <Text style={styles.title}>{game.name}</Text>
+          <Text style={styles.meta}>
+            Released: {formatReleased(game.released, game.tba)}
+          </Text>
+          <Text style={styles.meta}>
+            Metacritic: {game.metacritic != null ? String(game.metacritic) : '—'}
+          </Text>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setShowPlatforms((prev) => !prev)}
+          >
+            <View style={styles.platformRow}>
+              <Text style={styles.meta}>Platforms:</Text>
+
+              {platformKeys.length ? (
+                <View style={styles.iconRow}>
+                  {platformKeys.map((platformKey) => {
+                    const icon = getPlatformIcon(platformKey);
+
+                    return icon.family === 'ion' ? (
+                      <Ionicons
+                        key={platformKey}
+                        name={icon.name}
+                        size={18}
+                        color={colors.textSecondary}
+                      />
+                    ) : (
+                      <MaterialCommunityIcons
+                        key={platformKey}
+                        name={icon.name}
+                        size={18}
+                        color={colors.textSecondary}
+                      />
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text style={styles.meta}>—</Text>
+              )}
             </View>
-          ) : (
-            <Text style={styles.meta}>—</Text>
-          )}
-        </View>
 
-        {showPlatforms ? <Text style={styles.platformText}>{platformText}</Text> : null}
-      </Pressable>
-      <Text style={styles.meta} numberOfLines={2}>
-        Genres: {genres}
-      </Text>
+            {showPlatforms ? (
+              <Text style={styles.platformText}>{platformText}</Text>
+            ) : null}
+          </Pressable>
+
+          <Text style={styles.meta} numberOfLines={2}>
+            Genres: {genres}
+          </Text>
+        </View>
+      </View>
+
       {inLibrary && onRemove ? (
         <Pressable
           accessibilityRole="button"
@@ -125,6 +148,7 @@ function GameResultCardComponent({
           <Text style={styles.removeLabel}>{actionLabel ?? 'Remove'}</Text>
         </Pressable>
       ) : null}
+
       {!inLibrary && onAdd ? (
         <Pressable
           accessibilityRole="button"
@@ -157,11 +181,14 @@ function createStyles(colors: ThemeColors) {
       shadowRadius: 6,
       elevation: 3,
     },
+    cardRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
     image: {
-      width: '100%',
-      height: 160,
-      borderRadius: 10,
-      marginBottom: spacing.sm,
+      width: 72,
+      height: 72,
+      borderRadius: 8,
       backgroundColor: colors.surfaceMuted,
     },
     imagePlaceholder: {
@@ -172,16 +199,19 @@ function createStyles(colors: ThemeColors) {
       color: colors.textSecondary,
       fontSize: 14,
     },
+    cardBody: {
+      flex: 1,
+    },
     title: {
-      fontSize: 18,
+      fontSize: 17,
       fontWeight: '700',
       color: colors.primary,
-      marginBottom: spacing.xs,
+      marginBottom: spacing.xxs * 2,
     },
     meta: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors.textSecondary,
-      marginBottom: spacing.xxs * 2,
+      marginBottom: spacing.xxs,
     },
     addBtn: {
       marginTop: spacing.sm,
@@ -214,10 +244,11 @@ function createStyles(colors: ThemeColors) {
     },
     platformRow: {
       flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: spacing.xxs * 2,
+      alignItems: 'flex-start',
+      marginBottom: spacing.xxs,
     },
     iconRow: {
+      flex: 1,
       flexDirection: 'row',
       gap: spacing.xs,
       marginLeft: spacing.xs,
@@ -226,7 +257,8 @@ function createStyles(colors: ThemeColors) {
     platformText: {
       fontSize: 13,
       color: colors.textSecondary,
-      marginBottom: spacing.xxs * 2,
+      marginBottom: spacing.xxs,
+      lineHeight: 18,
     },
   });
 }

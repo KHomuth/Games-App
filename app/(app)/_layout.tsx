@@ -1,10 +1,52 @@
-import { Redirect, Stack, useSegments } from 'expo-router';
+import { Redirect, router, useSegments } from 'expo-router';
+import { Drawer } from 'expo-router/drawer';
 import { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 
 import { useAuth } from '@/src/auth/AuthContext';
 import { useTheme } from '@/src/theme/ThemeContext';
 import type { ThemeColors } from '@/src/theme/colors';
+import { spacing } from '@/src/theme/spacing';
+
+function CustomDrawerContent(props: any) {
+  const { colors, mode, toggleMode } = useTheme();
+  const drawerStyles = useMemo(() => createDrawerStyles(colors), [colors]);
+  const themeLabel = mode === 'dark' ? 'Light mode' : 'Dark mode';
+  const themeIcon = mode === 'dark' ? 'sunny-outline' : 'moon-outline';
+
+  return (
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={drawerStyles.drawerContent}
+    >
+      <DrawerItemList {...props} />
+
+      <View style={drawerStyles.drawerFooter}>
+        <Pressable onPress={toggleMode} style={drawerStyles.footerButton}>
+          <Ionicons name={themeIcon} size={20} color={colors.textSecondary} />
+          <Text style={drawerStyles.footerButtonText}>{themeLabel}</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push('/')}
+          style={drawerStyles.footerButton}
+        >
+          <Ionicons
+            name="home-outline"
+            size={20}
+            color={colors.textSecondary}
+          />
+
+          <Text style={drawerStyles.footerButtonText}>
+            Home
+          </Text>
+        </Pressable>
+      </View>
+    </DrawerContentScrollView>
+  );
+}
 
 /**
  * Search is public; library/account still require a restored on-device session.
@@ -24,7 +66,7 @@ export default function AuthenticatedGroupLayout() {
     [colors]
   );
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createLayoutStyles(colors), [colors]);
 
   if (!isReady) {
     return (
@@ -42,21 +84,85 @@ export default function AuthenticatedGroupLayout() {
   }
 
   return (
-    <Stack screenOptions={screenOptions}>
-      <Stack.Screen name="library" options={{ title: 'My library' }} />
-      <Stack.Screen name="search" options={{ title: 'Search' }} />
-      <Stack.Screen name="account" options={{ title: 'Account' }} />
-    </Stack>
+    <Drawer
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        ...screenOptions,
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.textSecondary,
+        drawerActiveBackgroundColor: colors.surfaceMuted,
+
+        drawerItemStyle: {
+          marginVertical: spacing.xs,
+        },
+      }}
+    >
+      <Drawer.Screen
+        name="library"
+        options={{
+          title: 'My library',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="library-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="search-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Drawer>
   );
 }
 
-function createStyles(colors: ThemeColors) {
+function createLayoutStyles(colors: ThemeColors) {
   return StyleSheet.create({
     centered: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors.background,
+    },
+  });
+}
+
+function createDrawerStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    drawerContent: {
+      flexGrow: 1,
+    },
+    drawerFooter: {
+      marginTop: spacing.xl * 2,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.surfaceMuted,
+    },
+    footerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+    },
+    footerButtonText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '400',
     },
   });
 }
