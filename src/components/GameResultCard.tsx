@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { RawgGame } from '@/src/api/rawg/types';
@@ -28,7 +28,7 @@ function formatReleased(iso: string | null, tba: boolean): string {
 /**
  * Search result row: art, core metadata, optional “save to library” action.
  */
-export function GameResultCard({
+function GameResultCardComponent({
   game,
   inLibrary = false,
   onAdd,
@@ -181,7 +181,7 @@ function createStyles(colors: ThemeColors) {
     meta: {
       fontSize: 14,
       color: colors.textSecondary,
-      marginBottom: 4,
+      marginBottom: spacing.xxs * 2,
     },
     addBtn: {
       marginTop: spacing.sm,
@@ -195,7 +195,7 @@ function createStyles(colors: ThemeColors) {
       opacity: 0.45,
     },
     addLabel: {
-      color: '#fff',
+      color: colors.textOnPrimary,
       fontWeight: '600',
       fontSize: 14,
     },
@@ -208,25 +208,27 @@ function createStyles(colors: ThemeColors) {
       borderRadius: 8,
     },
     removeLabel: {
-      color: '#fff',
+      color: colors.textOnPrimary,
       fontWeight: '600',
       fontSize: 14,
     },
     platformRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 4,
+      marginBottom: spacing.xxs * 2,
     },
     iconRow: {
       flexDirection: 'row',
-      gap: 6,
-      marginLeft: 6,
+      gap: spacing.xs,
+      marginLeft: spacing.xs,
       flexWrap: 'wrap',
     },
     platformText: {
       fontSize: 13,
       color: colors.textSecondary,
-      marginBottom: 4,
+      marginBottom: spacing.xxs * 2,
     },
   });
 }
+
+export const GameResultCard = memo(GameResultCardComponent);

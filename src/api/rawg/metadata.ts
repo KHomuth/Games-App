@@ -1,19 +1,12 @@
+import { isCatalogStale, listGenresFromDb, listPlatformsFromDb, saveCatalogToDb } from '@/src/db/rawgCatalog';
+
+import type { RawgGenreMeta, RawgPlatformMeta } from './catalogTypes';
 import { getRawgApiKey } from './config';
 import { RawgHttpError } from './errors';
 
+export type { RawgGenreMeta, RawgPlatformMeta } from './catalogTypes';
+
 const RAWG_BASE = 'https://api.rawg.io/api';
-
-export type RawgPlatformMeta = {
-  id: number;
-  name: string;
-  slug: string;
-};
-
-export type RawgGenreMeta = {
-  id: number;
-  name: string;
-  slug: string;
-};
 
 function parsePlatform(raw: unknown): RawgPlatformMeta | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -33,9 +26,6 @@ type Paginated = {
   results?: unknown[];
 };
 
-/**
- * Follows RAWG pagination until all rows are loaded (platforms / genres catalogs).
- */
 async function fetchAllPages<T>(
   initialPath: string,
   parseRow: (raw: unknown) => T | null,
@@ -68,52 +58,82 @@ async function fetchAllPages<T>(
   return out;
 }
 
-let platformsCache: RawgPlatformMeta[] | null = null;
-let platformsPromise: Promise<RawgPlatformMeta[]> | null = null;
-
-let genresCache: RawgGenreMeta[] | null = null;
-let genresPromise: Promise<RawgGenreMeta[]> | null = null;
-
-/** Loads once per app session; safe for concurrent callers. */
-export async function getAllPlatforms(signal?: AbortSignal): Promise<RawgPlatformMeta[]> {
-  if (platformsCache) return platformsCache;
-  if (!platformsPromise) {
-    platformsPromise = fetchAllPages('/platforms', parsePlatform, signal)
-      .then((rows) => {
-        platformsCache = rows;
-        return rows;
-      })
-      .catch((e) => {
-        platformsPromise = null;
-        throw e;
-      });
-  }
-  return platformsPromise;
+/** Fetches full platform + genre catalogs from RAWG (for sync / refresh). */
+export async function fetchRawgCatalogFromApi(signal?: AbortSignal): Promise<{
+  platforms: RawgPlatformMeta[];
+  genres: RawgGenreMeta[];
+}> {
+  const [platforms, genres] = await Promise.all([
+    fetchAllPages('/platforms', parsePlatform, signal),
+    fetchAllPages('/genres', parseGenre, signal),
+  ]);
+  return { platforms, genres };
 }
 
-export async function getAllGenres(signal?: AbortSignal): Promise<RawgGenreMeta[]> {
-  if (genresCache) return genresCache;
-  if (!genresPromise) {
-    genresPromise = fetchAllPages('/genres', parseGenre, signal)
-      .then((rows) => {
-        genresCache = rows;
-        return rows;
-      })
-      .catch((e) => {
-        genresPromise = null;
-        throw e;
-      });
+let platformsCache: RawgPlatformMeta[] | null = null;
+let genresCache: RawgGenreMeta[] | null = null;
+
+function setCaches(platforms: RawgPlatformMeta[], genres: RawgGenreMeta[]): void {
+  platformsCache = platforms;
+  genresCache = genres;
+}
+
+/** Loads platform catalog from memory or SQLite (must be synced first). */
+export async function getAllPlatforms(): Promise<RawgPlatformMeta[]> {
+  if (platformsCache?.length) return platformsCache;
+  const fromDb = await listPlatformsFromDb();
+  if (fromDb.length) {
+    platformsCache = fromDb;
+    return fromDb;
   }
-  return genresPromise;
+  return [];
+}
+
+/** Loads genre catalog from memory or SQLite (must be synced first). */
+export async function getAllGenres(): Promise<RawgGenreMeta[]> {
+  if (genresCache?.length) return genresCache;
+  const fromDb = await listGenresFromDb();
+  if (fromDb.length) {
+    genresCache = fromDb;
+    return fromDb;
+  }
+  return [];
+}
+
+/** Fetches from RAWG, writes SQLite, refreshes in-memory cache. */
+export async function syncRawgCatalogToStorage(signal?: AbortSignal): Promise<void> {
+  const { platforms, genres } = await fetchRawgCatalogFromApi(signal);
+  await saveCatalogToDb(platforms, genres);
+  setCaches(platforms, genres);
+}
+
+/** Loads from SQLite; if missing or older than 30 days, refetches from RAWG. */
+export async function ensureRawgCatalogFresh(signal?: AbortSignal): Promise<void> {
+  if (!(await isCatalogStale())) {
+    const [platforms, genres] = await Promise.all([listPlatformsFromDb(), listGenresFromDb()]);
+    if (platforms.length && genres.length) {
+      setCaches(platforms, genres);
+    }
+    return;
+  }
+
+  const { platforms, genres } = await fetchRawgCatalogFromApi(signal);
+  if (!platforms.length || !genres.length) {
+    throw new Error('RAWG catalog sync returned empty data.');
+  }
+  await saveCatalogToDb(platforms, genres);
+  setCaches(platforms, genres);
+}
+
+export function invalidateCatalogMemoryCache(): void {
+  platformsCache = null;
+  genresCache = null;
 }
 
 function normalizeComparable(s: string): string {
   return s.toLowerCase().trim().replace(/[\s_-]+/g, '');
 }
 
-/**
- * Picks the best platform for a free-text query using name + slug (substring / prefix).
- */
 export function findBestPlatformMatch(
   query: string,
   platforms: RawgPlatformMeta[]
@@ -148,9 +168,6 @@ export function findBestPlatformMatch(
   return scored[0].item;
 }
 
-/**
- * Picks the best genre for a free-text query (name + slug, handles e.g. "rpg" vs full slug).
- */
 export function findBestGenreMatch(query: string, genres: RawgGenreMeta[]): RawgGenreMeta | null {
   const q = query.toLowerCase().trim();
   if (!q) return null;

@@ -34,7 +34,7 @@ export function PrimaryButton({
       : variant === 'secondary'
         ? colors.surfaceMuted
         : colors.primary;
-  const fg = variant === 'secondary' ? colors.textPrimary : '#fff';
+  const fg = variant === 'secondary' ? colors.textPrimary : colors.textOnPrimary;
 
   return (
     <Pressable
@@ -64,7 +64,7 @@ export function PrimaryButton({
 function createStyles() {
   return StyleSheet.create({
     base: {
-      paddingVertical: spacing.sm + 2,
+      paddingVertical: spacing.sm + spacing.xxs,
       paddingHorizontal: spacing.lg,
       borderRadius: 12,
       alignItems: 'center',

@@ -8,6 +8,7 @@ import React, {
   useState,
 } from 'react';
 
+import { ensureRawgCatalogFresh } from '@/src/api/rawg/metadata';
 import { getDatabase } from '@/src/db/database';
 import { clearStoredUserId, getStoredUserId, setStoredUserId } from '@/src/db/session';
 import { getUserById, registerUser, verifyUserCredentials, type UserRow } from '@/src/db/users';
@@ -39,6 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         await getDatabase();
+        void ensureRawgCatalogFresh().catch((err) => {
+          console.error('RAWG catalog sync failed', err);
+        });
         const id = await getStoredUserId();
         if (id != null && !cancelled) {
           const row = await getUserById(id);
