@@ -1,8 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Text, type ListRenderItem } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, Modal, Pressable, ScrollView, Text, View, type ListRenderItem } from 'react-native';
 
-import { RawgConfigError, RawgHttpError, searchGames, type RawgGame } from '@/src/api/rawg';
+import { RawgConfigError, RawgHttpError, getGameDetails, searchGames, type RawgGame } from '@/src/api/rawg';
 import { GameFiltersPanel } from '@/src/components/GameFiltersPanel';
 import { LoadMoreFooter } from '@/src/components/LoadMoreFooter';
 import { SearchResultRow } from '@/src/components/SearchResultRow';
@@ -11,11 +11,7 @@ import { Screen } from '@/src/components/Screen';
 import { GAME_LIST_FLATLIST_PROPS } from '@/src/constants/flatList';
 import { describeFilters } from '@/src/filters/describeFilters';
 import { EMPTY_GAME_FILTERS, hasActiveFilters, type GameFilters } from '@/src/filters/types';
-import {
-  addGameToLibrary,
-  listLibraryRawgIds,
-  removeGameFromLibrary,
-} from '@/src/db/libraryGames';
+import { addGameToLibrary, listLibraryRawgIds, removeGameFromLibrary } from '@/src/db/libraryGames';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import { useGameCatalogOptions } from '@/src/hooks/useGameCatalogOptions';
 import { useAuth } from '@/src/auth/AuthContext';
@@ -45,6 +41,9 @@ export default function SearchScreen() {
   const [savingId, setSavingId] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
+  const [selectedGame, setSelectedGame] = useState<RawgGame | null>(null);
+  const [gameDetails, setGameDetails] = useState<any | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const filterDescription = useMemo(
@@ -121,6 +120,7 @@ export default function SearchScreen() {
     const controller = new AbortController();
     abortRef.current = controller;
     setLoadingMore(true);
+
     try {
       const data = await searchGames(
         { filters: debouncedFilters, pageUrl: nextPageUrl },
@@ -153,7 +153,9 @@ export default function SearchScreen() {
         );
         return;
       }
+
       setSavingId(game.id);
+
       try {
         const outcome = await addGameToLibrary(user.id, game);
         if (outcome.ok) {
@@ -173,7 +175,9 @@ export default function SearchScreen() {
   const onRemove = useCallback(
     async (rawgId: number) => {
       if (!user) return;
+
       setRemovingId(rawgId);
+
       try {
         await removeGameFromLibrary(user.id, rawgId);
         setLibraryIds((prev) => {
@@ -188,6 +192,20 @@ export default function SearchScreen() {
     [user]
   );
 
+  const onOpenDetails = useCallback(async (game: RawgGame) => {
+    setSelectedGame(game);
+    setDetailsLoading(true);
+
+    try {
+      const details = await getGameDetails(game.id);
+      setGameDetails(details);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  }, []);
+
   const keyExtractor = useCallback((item: RawgGame) => String(item.id), []);
 
   const renderItem: ListRenderItem<RawgGame> = useCallback(
@@ -195,6 +213,7 @@ export default function SearchScreen() {
       const inLibrary = user != null && libraryIds.has(item.id);
       const busy = savingId === item.id || removingId === item.id;
       let actionLabel: string | undefined;
+
       if (savingId === item.id) actionLabel = 'Adding…';
       else if (removingId === item.id) actionLabel = 'Removing…';
 
@@ -206,10 +225,11 @@ export default function SearchScreen() {
           actionLabel={actionLabel}
           onSave={onSave}
           onRemove={onRemove}
+          onOpenDetails={onOpenDetails}
         />
       );
     },
-    [user, libraryIds, savingId, removingId, onSave, onRemove]
+    [user, libraryIds, savingId, removingId, onSave, onRemove, onOpenDetails]
   );
 
   const showEmpty = !loading && hasActiveFilters(debouncedFilters);
@@ -219,6 +239,7 @@ export default function SearchScreen() {
     if (showEmpty) {
       return <Text style={listScreenStyles.empty}>No games matched these filters.</Text>;
     }
+
     if (showHint) {
       return (
         <Text style={listScreenStyles.empty}>
@@ -226,6 +247,7 @@ export default function SearchScreen() {
         </Text>
       );
     }
+
     return null;
   }, [showEmpty, showHint]);
 
@@ -252,6 +274,7 @@ export default function SearchScreen() {
       />
 
       {error ? <Text style={listScreenStyles.error}>{error}</Text> : null}
+
       {filterDescription && !error ? (
         <Text style={listScreenStyles.filterNote}>{filterDescription}</Text>
       ) : null}
@@ -269,6 +292,97 @@ export default function SearchScreen() {
         ListEmptyComponent={listEmpty}
         ListFooterComponent={listFooter}
       />
+
+      <Modal
+        visible={selectedGame !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setSelectedGame(null);
+          setGameDetails(null);
+        }}
+      >
+        <View style={listScreenStyles.modalBackdrop}>
+          <View style={listScreenStyles.modalCard}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={listScreenStyles.modalTitle}>
+                {selectedGame?.name}
+              </Text>
+
+              {selectedGame?.background_image ? (
+                <Image
+                  source={{ uri: selectedGame.background_image }}
+                  style={listScreenStyles.modalImage}
+                />
+              ) : null}
+
+              {detailsLoading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <>
+                    <Text style={listScreenStyles.meta}>
+                        Released: {gameDetails?.released ?? selectedGame?.released ?? '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        Metacritic: {gameDetails?.metacritic != null ? String(gameDetails.metacritic) : '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        ESRB: {gameDetails?.esrb_rating?.name ?? '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.modalSectionTitle}>
+                      Game Information
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        Genres: {gameDetails?.genres?.map((g: { name?: string }) => g.name).filter(Boolean).join(', ') || '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        Platforms: {gameDetails?.platforms?.map((p: { platform?: { name?: string } }) => p.platform?.name).filter(Boolean).join(', ') || '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.modalSectionTitle}>
+                      Studio
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        Developers: {gameDetails?.developers?.map((d: { name?: string }) => d.name).filter(Boolean).join(', ') || '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        Publishers: {gameDetails?.publishers?.map((p: { name?: string }) => p.name).filter(Boolean).join(', ') || '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.meta}>
+                        Website: {gameDetails?.website || '—'}
+                    </Text>
+
+                    <Text style={listScreenStyles.modalSectionTitle}>
+                      Description
+                    </Text>
+
+                    <Text style={listScreenStyles.modalDescription}>
+                        {gameDetails?.description_raw || 'No description available.'}
+                    </Text>
+                </>
+              )}
+
+              <Pressable
+                onPress={() => {
+                  setSelectedGame(null);
+                  setGameDetails(null);
+                }}
+                style={listScreenStyles.modalCloseButton}
+              >
+                <Text style={listScreenStyles.modalCloseText}>Close</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }

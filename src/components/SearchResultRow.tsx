@@ -11,6 +11,7 @@ type Props = {
   actionLabel?: string;
   onSave: (game: RawgGame) => void;
   onRemove: (rawgId: number) => void;
+  onOpenDetails: (game: RawgGame) => void;
 };
 
 function SearchResultRowComponent({
@@ -20,6 +21,7 @@ function SearchResultRowComponent({
   actionLabel,
   onSave,
   onRemove,
+  onOpenDetails,
 }: Props) {
   return (
     <GameResultCard
@@ -27,6 +29,7 @@ function SearchResultRowComponent({
       inLibrary={inLibrary}
       onAdd={!inLibrary ? () => onSave(game) : undefined}
       onRemove={inLibrary ? () => onRemove(game.id) : undefined}
+      onPress={() => onOpenDetails(game)}
       actionDisabled={busy}
       actionLabel={actionLabel}
     />

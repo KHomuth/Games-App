@@ -23,6 +23,23 @@ export type RawgGame = {
   genres?: RawgGenre[];
 };
 
+export type RawgGameDetails = RawgGame & {
+  description_raw?: string;
+  website?: string | null;
+  developers?: {
+    id?: number;
+    name?: string;
+  }[];
+  publishers?: {
+    id?: number;
+    name?: string;
+  }[];
+  esrb_rating?: {
+    id?: number;
+    name?: string;
+  } | null;
+};
+
 export type RawgGamesListResponse = {
   count?: number;
   next?: string | null;

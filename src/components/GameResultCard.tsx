@@ -12,6 +12,7 @@ type Props = {
   inLibrary?: boolean;
   onAdd?: () => void;
   onRemove?: () => void;
+  onPress?: () => void;
   actionDisabled?: boolean;
   actionLabel?: string;
 };
@@ -32,6 +33,7 @@ function GameResultCardComponent({
   inLibrary = false,
   onAdd,
   onRemove,
+  onPress,
   actionDisabled,
   actionLabel,
 }: Props) {
@@ -66,7 +68,14 @@ function GameResultCardComponent({
   );
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && onPress && { opacity: 0.92 },
+      ]}
+    >
       <View style={styles.cardRow}>
         {game.background_image ? (
           <Image source={{ uri: game.background_image }} style={styles.image} />
@@ -161,7 +170,7 @@ function GameResultCardComponent({
           <Text style={styles.addLabel}>{actionLabel ?? 'Add to library'}</Text>
         </Pressable>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
