@@ -19,6 +19,7 @@ function CustomDrawerContent(props: any) {
   return (
     <DrawerContentScrollView
       {...props}
+      style={drawerStyles.drawerScroll}
       contentContainerStyle={drawerStyles.drawerContent}
     >
       <DrawerItemList {...props} />
@@ -88,10 +89,11 @@ export default function AuthenticatedGroupLayout() {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         ...screenOptions,
+        drawerStyle: { backgroundColor: colors.surface },
+        overlayColor: colors.overlay,
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.textSecondary,
         drawerActiveBackgroundColor: colors.surfaceMuted,
-
         drawerItemStyle: {
           marginVertical: spacing.xs,
         },
@@ -143,6 +145,9 @@ function createLayoutStyles(colors: ThemeColors) {
 
 function createDrawerStyles(colors: ThemeColors) {
   return StyleSheet.create({
+    drawerScroll: {
+      backgroundColor: colors.surface,
+    },
     drawerContent: {
       flexGrow: 1,
     },
@@ -150,7 +155,7 @@ function createDrawerStyles(colors: ThemeColors) {
       marginTop: spacing.xl * 2,
       paddingTop: spacing.md,
       borderTopWidth: 1,
-      borderTopColor: colors.surfaceMuted,
+      borderTopColor: colors.border,
     },
     footerButton: {
       flexDirection: 'row',

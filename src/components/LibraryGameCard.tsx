@@ -3,24 +3,19 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { LibraryGameRow } from '@/src/db/libraryGames';
+import { formatReleased } from '@/src/formatting/formatReleased';
 import { useTheme } from '@/src/theme/ThemeContext';
 import type { ThemeColors } from '@/src/theme/colors';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 import { spacing } from '@/src/theme/spacing';
 
-function formatReleased(iso: string | null): string {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  if (!y || !m || !d) return iso;
-  return `${d}.${m}.${y}`;
-}
-
 type Props = {
   item: LibraryGameRow;
   onRemove: (rawgId: number) => void;
+  onPress?: () => void;
 };
 
-function LibraryGameCardComponent({ item, onRemove }: Props) {
+function LibraryGameCardComponent({ item, onRemove, onPress }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
@@ -39,7 +34,11 @@ function LibraryGameCardComponent({ item, onRemove }: Props) {
   }, [item.rawgId, onRemove]);
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.card, pressed && onPress && { opacity: 0.92 }]}
+    >
       <View style={styles.cardRow}>
         {item.backgroundImage ? (
           <Image source={{ uri: item.backgroundImage }} style={styles.thumb} />
@@ -111,7 +110,7 @@ function LibraryGameCardComponent({ item, onRemove }: Props) {
       >
         <Text style={styles.removeText}>Remove</Text>
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 

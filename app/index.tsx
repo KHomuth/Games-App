@@ -17,11 +17,22 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
  */
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, mode, toggleMode } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const themeIcon = mode === 'dark' ? 'sunny-outline' : 'moon-outline';
+  const themeLabel = mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
     <Screen>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={themeLabel}
+        onPress={toggleMode}
+        style={({ pressed }) => [styles.themeToggle, pressed && styles.themeTogglePressed]}
+      >
+        <Ionicons name={themeIcon} size={20} color={colors.textSecondary} />
+      </Pressable>
+
       <View style={styles.header}>
         <Text style={styles.title}>Games DB</Text>
         <Text style={styles.subtitle}>
@@ -70,6 +81,18 @@ function MenuLink({
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
+    themeToggle: {
+      alignSelf: 'flex-end',
+      marginTop: spacing.sm,
+      padding: spacing.sm,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    themeTogglePressed: {
+      opacity: 0.75,
+    },
     header: {
       paddingTop: spacing.lg,
       marginTop: spacing.xxl + spacing.xxs,

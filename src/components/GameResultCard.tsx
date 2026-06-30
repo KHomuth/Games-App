@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type { RawgGame } from '@/src/api/rawg/types';
+import { formatReleased } from '@/src/formatting/formatReleased';
 import { useTheme } from '@/src/theme/ThemeContext';
 import type { ThemeColors } from '@/src/theme/colors';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
@@ -13,17 +14,10 @@ type Props = {
   inLibrary?: boolean;
   onAdd?: () => void;
   onRemove?: () => void;
+  onPress?: () => void;
   actionDisabled?: boolean;
   actionLabel?: string;
 };
-
-function formatReleased(iso: string | null, tba: boolean): string {
-  if (tba) return 'TBA';
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  if (!y || !m || !d) return iso;
-  return `${d}.${m}.${y}`;
-}
 
 /**
  * Search result row: art, core metadata, optional “save to library” action.
@@ -33,6 +27,7 @@ function GameResultCardComponent({
   inLibrary = false,
   onAdd,
   onRemove,
+  onPress,
   actionDisabled,
   actionLabel,
 }: Props) {
@@ -69,7 +64,14 @@ function GameResultCardComponent({
   );
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && onPress && { opacity: 0.92 },
+      ]}
+    >
       <View style={styles.cardRow}>
         {game.background_image ? (
           <Image source={{ uri: game.background_image }} style={styles.image} />
@@ -164,7 +166,7 @@ function GameResultCardComponent({
           <Text style={styles.addLabel}>{actionLabel ?? 'Add to library'}</Text>
         </Pressable>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 

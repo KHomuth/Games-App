@@ -4,7 +4,7 @@ import { hasActiveFilters } from '@/src/filters/types';
 
 import { getRawgApiKey } from './config';
 import { RawgHttpError } from './errors';
-import type { RawgGame, RawgGamesListResponse } from './types';
+import type { RawgGame, RawgGameDetails, RawgGamesListResponse } from './types';
 
 const RAWG_BASE = 'https://api.rawg.io/api';
 
@@ -112,4 +112,28 @@ export async function searchGames(
   applyFiltersToUrl(url, input.filters);
 
   return fetchGamesPage(url, { signal: options?.signal, titleQuery });
+}
+
+export async function getGameDetails(
+  gameId: number,
+  options?: { signal?: AbortSignal }
+): Promise<RawgGameDetails> {
+  const key = getRawgApiKey();
+
+  const response = await fetch(
+    `${RAWG_BASE}/games/${gameId}?key=${key}`,
+    {
+      signal: options?.signal,
+      headers: {
+        Accept: 'application/json',
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new RawgHttpError(response.status, text);
+  }
+
+  return (await response.json()) as RawgGameDetails;
 }
