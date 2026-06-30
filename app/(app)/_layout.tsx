@@ -1,32 +1,37 @@
 import { Redirect, router, useSegments } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 
 import { useAuth } from '@/src/auth/AuthContext';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
-const screenOptions = {
-  headerStyle: { backgroundColor: colors.surface },
-  headerTintColor: colors.primary,
-  headerTitleStyle: { fontWeight: '600' as const, color: colors.textPrimary },
-  contentStyle: { backgroundColor: colors.background },
-};
-
 function CustomDrawerContent(props: any) {
+  const { colors, mode, toggleMode } = useTheme();
+  const drawerStyles = useMemo(() => createDrawerStyles(colors), [colors]);
+  const themeLabel = mode === 'dark' ? 'Light mode' : 'Dark mode';
+  const themeIcon = mode === 'dark' ? 'sunny-outline' : 'moon-outline';
+
   return (
     <DrawerContentScrollView
       {...props}
-      contentContainerStyle={styles.drawerContent}
+      contentContainerStyle={drawerStyles.drawerContent}
     >
       <DrawerItemList {...props} />
 
-      <View style={styles.drawerFooter}>
+      <View style={drawerStyles.drawerFooter}>
+        <Pressable onPress={toggleMode} style={drawerStyles.footerButton}>
+          <Ionicons name={themeIcon} size={20} color={colors.textSecondary} />
+          <Text style={drawerStyles.footerButtonText}>{themeLabel}</Text>
+        </Pressable>
+
         <Pressable
           onPress={() => router.push('/')}
-          style={styles.homeButton}
+          style={drawerStyles.footerButton}
         >
           <Ionicons
             name="home-outline"
@@ -34,7 +39,7 @@ function CustomDrawerContent(props: any) {
             color={colors.textSecondary}
           />
 
-          <Text style={styles.homeButtonText}>
+          <Text style={drawerStyles.footerButtonText}>
             Home
           </Text>
         </Pressable>
@@ -48,7 +53,20 @@ function CustomDrawerContent(props: any) {
  */
 export default function AuthenticatedGroupLayout() {
   const { user, isReady } = useAuth();
+  const { colors } = useTheme();
   const segments = useSegments();
+
+  const screenOptions = useMemo(
+    () => ({
+      headerStyle: { backgroundColor: colors.surface },
+      headerTintColor: colors.primary,
+      headerTitleStyle: { fontWeight: '600' as const, color: colors.textPrimary },
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors]
+  );
+
+  const styles = useMemo(() => createLayoutStyles(colors), [colors]);
 
   if (!isReady) {
     return (
@@ -112,32 +130,39 @@ export default function AuthenticatedGroupLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  drawerContent: {
-    flexGrow: 1,
-  },
-  drawerFooter: {
-  marginTop: spacing.xl * 2,
-  paddingTop: spacing.md,
-  borderTopWidth: 1,
-  borderTopColor: colors.surfaceMuted,
-},
-  homeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  homeButtonText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '400',
-  },
-});
+function createLayoutStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+  });
+}
+
+function createDrawerStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    drawerContent: {
+      flexGrow: 1,
+    },
+    drawerFooter: {
+      marginTop: spacing.xl * 2,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.surfaceMuted,
+    },
+    footerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+    },
+    footerButtonText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '400',
+    },
+  });
+}

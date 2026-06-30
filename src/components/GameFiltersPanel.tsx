@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { CatalogOption } from '@/src/db/rawgCatalog';
 import { EMPTY_GAME_FILTERS, hasActiveFilters, type GameFilters } from '@/src/filters/types';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 import { MultiSelectField } from './MultiSelectField';
@@ -25,6 +27,8 @@ export function GameFiltersPanel({
   catalogReady,
   catalogError,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const catalogDisabled = !catalogReady || Boolean(catalogError);
   const showClearAll = hasActiveFilters(filters);
 
@@ -81,38 +85,40 @@ export function GameFiltersPanel({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  toolbar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: spacing.sm,
-  },
-  clearAllButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  clearAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  catalogLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  catalogLoadingText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  catalogError: {
-    color: colors.danger,
-    fontSize: 14,
-    marginBottom: spacing.sm,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+    },
+    toolbar: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      marginBottom: spacing.sm,
+    },
+    clearAllButton: {
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+    },
+    clearAllText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.primary,
+    },
+    catalogLoading: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    catalogLoadingText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    catalogError: {
+      color: colors.danger,
+      fontSize: 14,
+      marginBottom: spacing.sm,
+    },
+  });
+}

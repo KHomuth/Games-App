@@ -6,22 +6,28 @@ import { RawgConfigError, RawgHttpError, getGameDetails, searchGames, type RawgG
 import { GameFiltersPanel } from '@/src/components/GameFiltersPanel';
 import { LoadMoreFooter } from '@/src/components/LoadMoreFooter';
 import { SearchResultRow } from '@/src/components/SearchResultRow';
-import { listScreenStyles } from '@/src/components/listScreenStyles';
+import { useListScreenStyles } from '@/src/components/listScreenStyles';
 import { Screen } from '@/src/components/Screen';
 import { GAME_LIST_FLATLIST_PROPS } from '@/src/constants/flatList';
 import { describeFilters } from '@/src/filters/describeFilters';
 import { EMPTY_GAME_FILTERS, hasActiveFilters, type GameFilters } from '@/src/filters/types';
-import { addGameToLibrary, listLibraryRawgIds, removeGameFromLibrary } from '@/src/db/libraryGames';
+import {
+  addGameToLibrary,
+  listLibraryRawgIds,
+  removeGameFromLibrary,
+} from '@/src/db/libraryGames';
+import { useAuth } from '@/src/auth/AuthContext';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import { useGameCatalogOptions } from '@/src/hooks/useGameCatalogOptions';
-import { useAuth } from '@/src/auth/AuthContext';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
 
 /**
  * Debounced RAWG search with shared platform/genre multiselect filters.
  */
 export default function SearchScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const listScreenStyles = useListScreenStyles();
   const [filters, setFilters] = useState<GameFilters>(EMPTY_GAME_FILTERS);
   const debouncedQuery = useDebouncedValue(filters.query, 450);
   const { platformIds, genreSlugs } = filters;
@@ -249,7 +255,7 @@ export default function SearchScreen() {
     }
 
     return null;
-  }, [showEmpty, showHint]);
+  }, [showEmpty, showHint, listScreenStyles.empty]);
 
   const listFooter = useMemo(
     () => (

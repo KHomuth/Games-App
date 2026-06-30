@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FlatList,
   Modal,
@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 export type MultiSelectOption<T extends string | number> = {
@@ -33,6 +34,8 @@ export function MultiSelectField<T extends string | number>({
   onChange,
   disabled,
 }: Props<T>) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
 
   const selectedLabels = options
@@ -134,116 +137,118 @@ export function MultiSelectField<T extends string | number>({
   );
 }
 
-const styles = StyleSheet.create({
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
-    marginBottom: spacing.sm,
-  },
-  triggerMain: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-  },
-  triggerClear: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    justifyContent: 'center',
-  },
-  clearGlyph: {
-    fontSize: 22,
-    lineHeight: 24,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  triggerDisabled: {
-    opacity: 0.6,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  value: {
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  placeholder: {
-    color: colors.textSecondary,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    maxHeight: '70%',
-    paddingBottom: spacing.lg,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  sheetTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  done: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  clearRow: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  clearText: {
-    color: colors.danger,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  list: {
-    paddingHorizontal: spacing.md,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm + 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  optionActive: {
-    backgroundColor: colors.surfaceMuted,
-    marginHorizontal: -spacing.md,
-    paddingHorizontal: spacing.md,
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  optionLabelActive: {
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  check: {
-    fontSize: 18,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    trigger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      marginBottom: spacing.sm,
+    },
+    triggerMain: {
+      flex: 1,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm + spacing.xxs,
+    },
+    triggerClear: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm + spacing.xxs,
+      justifyContent: 'center',
+    },
+    clearGlyph: {
+      fontSize: 22,
+      lineHeight: 24,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    triggerDisabled: {
+      opacity: 0.6,
+    },
+    label: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: spacing.xxs,
+    },
+    value: {
+      fontSize: 16,
+      color: colors.textPrimary,
+    },
+    placeholder: {
+      color: colors.textSecondary,
+    },
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: spacing.md,
+      borderTopRightRadius: spacing.md,
+      maxHeight: '70%',
+      paddingBottom: spacing.lg,
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    sheetTitle: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    done: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.primary,
+    },
+    clearRow: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    clearText: {
+      color: colors.danger,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    list: {
+      paddingHorizontal: spacing.md,
+    },
+    option: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.sm + spacing.xxs,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    optionActive: {
+      backgroundColor: colors.surfaceMuted,
+      marginHorizontal: -spacing.md,
+      paddingHorizontal: spacing.md,
+    },
+    optionLabel: {
+      fontSize: 16,
+      color: colors.textPrimary,
+      flex: 1,
+    },
+    optionLabelActive: {
+      fontWeight: '600',
+      color: colors.primary,
+    },
+    check: {
+      fontSize: 18,
+      color: colors.primary,
+      fontWeight: '700',
+    },
+  });
+}

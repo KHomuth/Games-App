@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 
 type Props = TextInputProps & {
@@ -14,6 +16,8 @@ type Props = TextInputProps & {
  * Single-line input styled to match the rest of the UI.
  */
 export function TextField({ style, last, value, onClear, ...rest }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const showClear =
     typeof onClear === 'function' && typeof value === 'string' && value.length > 0;
 
@@ -42,38 +46,40 @@ export function TextField({ style, last, value, onClear, ...rest }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { width: '100%' },
-  margin: { marginBottom: spacing.md },
-  inputRow: {
-    position: 'relative',
-    width: '100%',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
-  },
-  inputWithClear: {
-    paddingRight: spacing.xl + spacing.sm,
-  },
-  clearButton: {
-    position: 'absolute',
-    right: spacing.sm,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
-  },
-  clearGlyph: {
-    fontSize: 22,
-    lineHeight: 24,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: { width: '100%' },
+    margin: { marginBottom: spacing.md },
+    inputRow: {
+      position: 'relative',
+      width: '100%',
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm + spacing.xxs,
+      fontSize: 16,
+      color: colors.textPrimary,
+      backgroundColor: colors.surface,
+    },
+    inputWithClear: {
+      paddingRight: spacing.xl + spacing.sm,
+    },
+    clearButton: {
+      position: 'absolute',
+      right: spacing.sm,
+      top: 0,
+      bottom: 0,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xs,
+    },
+    clearGlyph: {
+      fontSize: 22,
+      lineHeight: 24,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+  });
+}

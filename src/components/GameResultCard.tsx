@@ -1,10 +1,11 @@
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 
 import type { RawgGame } from '@/src/api/rawg/types';
-import { colors } from '@/src/theme/colors';
+import { useTheme } from '@/src/theme/ThemeContext';
+import type { ThemeColors } from '@/src/theme/colors';
+import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
 import { spacing } from '@/src/theme/spacing';
 
 type Props = {
@@ -37,6 +38,8 @@ function GameResultCardComponent({
   actionDisabled,
   actionLabel,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPlatforms, setShowPlatforms] = useState(false);
 
   const order = ['pc', 'playstation', 'xbox', 'nintendo', 'mobile', 'other'];
@@ -174,97 +177,99 @@ function GameResultCardComponent({
   );
 }
 
-export const GameResultCard = memo(GameResultCardComponent);
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      shadowColor: colors.cardShadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    cardRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    image: {
+      width: 72,
+      height: 72,
+      borderRadius: 8,
+      backgroundColor: colors.surfaceMuted,
+    },
+    imagePlaceholder: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    placeholderText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    cardBody: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.primary,
+      marginBottom: spacing.xxs * 2,
+    },
+    meta: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: spacing.xxs,
+    },
+    addBtn: {
+      marginTop: spacing.sm,
+      alignSelf: 'flex-start',
+      backgroundColor: colors.primary,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: 8,
+    },
+    actionDisabled: {
+      opacity: 0.45,
+    },
+    addLabel: {
+      color: colors.textOnPrimary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    removeBtn: {
+      marginTop: spacing.sm,
+      alignSelf: 'flex-end',
+      backgroundColor: colors.danger,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: 8,
+    },
+    removeLabel: {
+      color: colors.textOnPrimary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    platformRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: spacing.xxs,
+    },
+    iconRow: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing.xs,
+      marginLeft: spacing.xs,
+      flexWrap: 'wrap',
+    },
+    platformText: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: spacing.xxs,
+      lineHeight: 18,
+    },
+  });
+}
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  image: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceMuted,
-  },
-  imagePlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholderText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 4,
-  },
-  meta: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  addBtn: {
-    marginTop: spacing.sm,
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: 8,
-  },
-  actionDisabled: {
-    opacity: 0.45,
-  },
-  addLabel: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  removeBtn: {
-    marginTop: spacing.sm,
-    alignSelf: 'flex-end',
-    backgroundColor: colors.danger,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: 8,
-  },
-  removeLabel: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  platformRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 2,
-  },
-  iconRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 6,
-    marginLeft: 6,
-    flexWrap: 'wrap',
-  },
-  platformText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 2,
-    lineHeight: 18,
-  },
-});
+export const GameResultCard = memo(GameResultCardComponent);
