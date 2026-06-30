@@ -10,6 +10,7 @@ import {
   type ListRenderItem,
 } from 'react-native';
 
+import { GameDetailsModal, libraryRowToDetailsContent, type GameDetailsContent } from '@/src/components/GameDetailsModal';
 import { GameFiltersPanel } from '@/src/components/GameFiltersPanel';
 import { LibraryGameCard } from '@/src/components/LibraryGameCard';
 import { LoadMoreFooter } from '@/src/components/LoadMoreFooter';
@@ -57,6 +58,7 @@ export default function LibraryScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
+  const [selectedGame, setSelectedGame] = useState<LibraryGameRow | null>(null);
 
   const filterDescription = useMemo(
     () =>
@@ -124,16 +126,34 @@ export default function LibraryScreen() {
     async (rawgId: number) => {
       if (!user) return;
       await removeGameFromLibrary(user.id, rawgId);
+      if (selectedGame?.rawgId === rawgId) {
+        setSelectedGame(null);
+      }
       void loadPage(false, 0);
     },
-    [user, loadPage]
+    [user, loadPage, selectedGame?.rawgId]
   );
+
+  const onOpenDetails = useCallback((game: LibraryGameRow) => {
+    setSelectedGame(game);
+  }, []);
+
+  const closeDetails = useCallback(() => {
+    setSelectedGame(null);
+  }, []);
+
+  const selectedDetailsContent = useMemo<GameDetailsContent | null>(() => {
+    if (!selectedGame) return null;
+    return libraryRowToDetailsContent(selectedGame);
+  }, [selectedGame]);
 
   const keyExtractor = useCallback((item: LibraryGameRow) => String(item.rawgId), []);
 
   const renderItem: ListRenderItem<LibraryGameRow> = useCallback(
-    ({ item }) => <LibraryGameCard item={item} onRemove={onRemove} />,
-    [onRemove]
+    ({ item }) => (
+      <LibraryGameCard item={item} onRemove={onRemove} onPress={() => onOpenDetails(item)} />
+    ),
+    [onRemove, onOpenDetails]
   );
 
   const listEmpty = useMemo(
@@ -228,6 +248,12 @@ export default function LibraryScreen() {
         contentContainerStyle={listScreenStyles.listContent}
         ListEmptyComponent={listEmpty}
         ListFooterComponent={listFooter}
+      />
+
+      <GameDetailsModal
+        visible={selectedGame !== null}
+        game={selectedDetailsContent}
+        onClose={closeDetails}
       />
     </Screen>
   );

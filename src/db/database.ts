@@ -73,6 +73,33 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
     );
   `);
 
+  await migrateLibraryGames(db);
+
   connection = db;
   return db;
+}
+
+async function migrateLibraryGames(db: SQLite.SQLiteDatabase): Promise<void> {
+  const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(library_games);');
+  const names = new Set(columns.map((column) => column.name));
+
+  if (!names.has('description_raw')) {
+    await db.execAsync('ALTER TABLE library_games ADD COLUMN description_raw TEXT;');
+  }
+  if (!names.has('website')) {
+    await db.execAsync('ALTER TABLE library_games ADD COLUMN website TEXT;');
+  }
+  if (!names.has('esrb_rating')) {
+    await db.execAsync('ALTER TABLE library_games ADD COLUMN esrb_rating TEXT;');
+  }
+  if (!names.has('developers_json')) {
+    await db.execAsync(
+      "ALTER TABLE library_games ADD COLUMN developers_json TEXT NOT NULL DEFAULT '[]';"
+    );
+  }
+  if (!names.has('publishers_json')) {
+    await db.execAsync(
+      "ALTER TABLE library_games ADD COLUMN publishers_json TEXT NOT NULL DEFAULT '[]';"
+    );
+  }
 }

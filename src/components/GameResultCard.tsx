@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type { RawgGame } from '@/src/api/rawg/types';
+import { formatReleased } from '@/src/formatting/formatReleased';
 import { useTheme } from '@/src/theme/ThemeContext';
 import type { ThemeColors } from '@/src/theme/colors';
 import { getPlatformIcon, getPlatformKey } from '@/src/theme/platformIcons';
@@ -17,14 +18,6 @@ type Props = {
   actionDisabled?: boolean;
   actionLabel?: string;
 };
-
-function formatReleased(iso: string | null, tba: boolean): string {
-  if (tba) return 'TBA';
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  if (!y || !m || !d) return iso;
-  return `${d}.${m}.${y}`;
-}
 
 /**
  * Search result row: art, core metadata, optional “save to library” action.

@@ -1,4 +1,4 @@
-import type { RawgGame } from '@/src/api/rawg/types';
+import type { RawgGame, RawgGameDetails } from '@/src/api/rawg/types';
 import { GAME_LIST_PAGE_SIZE } from '@/src/constants/pagination';
 import { matchesLibraryGame } from '@/src/filters/matchLibraryGame';
 import type { GameFilters } from '@/src/filters/types';
@@ -15,6 +15,11 @@ export type LibraryGameRow = {
   metacritic: number | null;
   platforms: string[];
   genres: string[];
+  description: string | null;
+  website: string | null;
+  esrbRating: string | null;
+  developers: string[];
+  publishers: string[];
   addedAt: string;
 };
 
@@ -42,9 +47,15 @@ export async function listLibraryGames(userId: number): Promise<LibraryGameRow[]
     metacritic: number | null;
     platforms_json: string;
     genres_json: string;
+    description_raw: string | null;
+    website: string | null;
+    esrb_rating: string | null;
+    developers_json: string;
+    publishers_json: string;
     added_at: string;
   }>(
-    `SELECT id, rawg_id, name, background_image, released, metacritic, platforms_json, genres_json, added_at
+    `SELECT id, rawg_id, name, background_image, released, metacritic, platforms_json, genres_json,
+            description_raw, website, esrb_rating, developers_json, publishers_json, added_at
      FROM library_games WHERE user_id = ? ORDER BY datetime(added_at) DESC;`,
     [userId]
   );
@@ -58,6 +69,11 @@ export async function listLibraryGames(userId: number): Promise<LibraryGameRow[]
     metacritic: row.metacritic,
     platforms: safeStringArray(row.platforms_json),
     genres: safeStringArray(row.genres_json),
+    description: row.description_raw,
+    website: row.website,
+    esrbRating: row.esrb_rating,
+    developers: safeStringArray(row.developers_json),
+    publishers: safeStringArray(row.publishers_json),
     addedAt: row.added_at,
   }));
 }
@@ -79,29 +95,61 @@ export type AddGameResult = { ok: true } | { ok: false; code: 'ALREADY_SAVED' };
 /**
  * Persists a game from search results into the user's library.
  */
-export async function addGameToLibrary(userId: number, game: RawgGame): Promise<AddGameResult> {
-  const platforms = (game.platforms ?? [])
-    .map((p) => p?.platform?.name)
-    .filter((n): n is string => typeof n === 'string');
-  const genres = (game.genres ?? [])
-    .map((g) => g?.name)
-    .filter((n): n is string => typeof n === 'string');
+export async function addGameToLibrary(
+  userId: number,
+  game: RawgGame,
+  details?: RawgGameDetails | null
+): Promise<AddGameResult> {
+  const platforms =
+    details?.platforms
+      ?.map((p) => p.platform?.name)
+      .filter((n): n is string => typeof n === 'string') ??
+    (game.platforms ?? [])
+      .map((p) => p?.platform?.name)
+      .filter((n): n is string => typeof n === 'string');
+
+  const genres =
+    details?.genres
+      ?.map((g) => g.name)
+      .filter((n): n is string => typeof n === 'string') ??
+    (game.genres ?? [])
+      .map((g) => g?.name)
+      .filter((n): n is string => typeof n === 'string');
+
+  const developers =
+    details?.developers
+      ?.map((d) => d.name)
+      .filter((n): n is string => typeof n === 'string') ?? [];
+
+  const publishers =
+    details?.publishers
+      ?.map((p) => p.name)
+      .filter((n): n is string => typeof n === 'string') ?? [];
 
   const db = await getDatabase();
 
   try {
     await db.runAsync(
-      `INSERT INTO library_games (user_id, rawg_id, name, background_image, released, metacritic, platforms_json, genres_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO library_games (
+         user_id, rawg_id, name, background_image, released, metacritic,
+         platforms_json, genres_json, description_raw, website, esrb_rating,
+         developers_json, publishers_json
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         userId,
         game.id,
         game.name,
         game.background_image ?? null,
-        game.released ?? null,
-        game.metacritic ?? null,
+        details?.released ?? game.released ?? null,
+        details?.metacritic ?? game.metacritic ?? null,
         JSON.stringify(platforms),
         JSON.stringify(genres),
+        details?.description_raw ?? null,
+        details?.website ?? null,
+        details?.esrb_rating?.name ?? null,
+        JSON.stringify(developers),
+        JSON.stringify(publishers),
       ]
     );
     return { ok: true };
