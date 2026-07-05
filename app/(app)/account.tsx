@@ -36,10 +36,6 @@ export default function AccountScreen() {
       <Text style={styles.label}>Signed in as</Text>
       <Text style={styles.email}>{user?.email ?? '—'}</Text>
 
-      <Text style={styles.note}>
-        This is a demo: there is no cloud backend. Data lives in SQLite on this device only.
-      </Text>
-
       <View style={styles.actions}>
         <PrimaryButton label="Sign out" variant="danger" onPress={confirmSignOut} />
       </View>
