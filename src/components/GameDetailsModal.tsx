@@ -1,4 +1,4 @@
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { RawgGame, RawgGameDetails } from '@/src/api/rawg/types';
 import { useListScreenStyles } from '@/src/components/listScreenStyles';
@@ -95,6 +95,8 @@ export function GameDetailsModal({ visible, game, loading = false, onClose }: Pr
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+
         <View style={styles.modalCard}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.modalTitle}>{game?.name}</Text>
