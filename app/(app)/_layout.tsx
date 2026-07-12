@@ -22,17 +22,10 @@ function CustomDrawerContent(props: any) {
       style={drawerStyles.drawerScroll}
       contentContainerStyle={drawerStyles.drawerContent}
     >
-      <DrawerItemList {...props} />
-
-      <View style={drawerStyles.drawerFooter}>
-        <Pressable onPress={toggleMode} style={drawerStyles.footerButton}>
-          <Ionicons name={themeIcon} size={20} color={colors.textSecondary} />
-          <Text style={drawerStyles.footerButtonText}>{themeLabel}</Text>
-        </Pressable>
-
+      <View style={drawerStyles.drawerHeader}>
         <Pressable
           onPress={() => router.push('/')}
-          style={drawerStyles.footerButton}
+          style={drawerStyles.headerButton}
         >
           <Ionicons
             name="home-outline"
@@ -40,9 +33,18 @@ function CustomDrawerContent(props: any) {
             color={colors.textSecondary}
           />
 
-          <Text style={drawerStyles.footerButtonText}>
+          <Text style={drawerStyles.headerButtonText}>
             Home
           </Text>
+        </Pressable>
+      </View> 
+      
+      <DrawerItemList {...props} />
+
+      <View style={drawerStyles.drawerFooter}>
+        <Pressable onPress={toggleMode} style={drawerStyles.footerButton}>
+          <Ionicons name={themeIcon} size={20} color={colors.textSecondary} />
+          <Text style={drawerStyles.footerButtonText}>{themeLabel}</Text>
         </Pressable>
       </View>
     </DrawerContentScrollView>
@@ -149,10 +151,11 @@ function createDrawerStyles(colors: ThemeColors) {
       backgroundColor: colors.surface,
     },
     drawerContent: {
+      flexDirection: 'column',
       flexGrow: 1,
     },
     drawerFooter: {
-      marginTop: spacing.xl * 2,
+      marginTop: 'auto',
       paddingTop: spacing.md,
       borderTopWidth: 1,
       borderTopColor: colors.border,
@@ -165,6 +168,24 @@ function createDrawerStyles(colors: ThemeColors) {
       paddingHorizontal: spacing.lg,
     },
     footerButtonText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '400',
+    },
+    drawerHeader: {
+      marginBottom: spacing.xl * 2,
+      paddingBottom: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+    },
+    headerButtonText: {
       color: colors.textSecondary,
       fontSize: 14,
       fontWeight: '400',
